@@ -1,0 +1,9 @@
+* // banning all files by default
+!*.html
+!*.css
+!*.mpd
+!*.md
+!*.mp4
+.vscode
+.idea
+.vs
