@@ -1,0 +1,7 @@
+title,type,author,year,genre,rating,description
+Information,other,Me,1234,Non-fiction,5,May contain spaces but will not contain commas.
+Clean Code,book,Robert C. Martin,2008,Software Engineering,4.7,A handbook of agile software craftsmanship.
+Mario Kart 8 Deluxe,game,Nintendo,2017,Racing,4.5,A fast-paced racing game featuring Mario universe characters.
+Design Patters,book,Erich Gamma,1994,Programming,4.5,A book probably about programming design patterns.
+Inception,move,Christopher Nolan,2010,Thriller,4.6,A trippy-ass movie.
+Beyond “blah blah blah”: exploring the “how” of transformation,paper,Julia Bentz; Karen O’Brien & Morgan Scoville-Simonds ,2022,,,Calls for transformations are clear and multiple pathways and alternative visions for the future have been defined. We then present insights from the collection of papers that focus on the “how” of transformation. The papers describe different ways of integrating the means and the manner in transformation processes.
