@@ -15,6 +15,21 @@ function persistCoverCache() {
   );
 }
 
+const CACHE_VERSION = "v2"; // change when input format changes
+
+localStorage.setItem("cacheVersion", CACHE_VERSION);
+
+function getCover(item) {
+  switch (item.type) {
+    case "book":
+      return getBookCover(item);
+    case "movie":
+      return getMoviePoster(item);
+    case "game":
+      return getGameCover(item);
+  }
+}
+
 /* {
   type: "book" | "movie" | "game",
   title,
@@ -25,18 +40,6 @@ function persistCoverCache() {
   description
 }
 
-getCover(item) {
-  switch (item.type) {
-    case "book": return getBookCover(item);
-    case "movie": return getMoviePoster(item);
-    case "game": return getGameCover(item);
-  }
-}
-
-const CACHE_VERSION = "v2"; // change when input format changes
-
-localStorage.setItem("cacheVersion", CACHE_VERSION);
-
 <div class="card placeholder-glow">
   <div class="card-img-top placeholder"></div>
   <div class="card-body">
@@ -45,7 +48,6 @@ localStorage.setItem("cacheVersion", CACHE_VERSION);
   </div>
 </div> */
 
-/* ------------------------ EXPERIMENTAL SECTION START ------------------------ */
 function scoreResult(doc, book) {
   let score = 0;
 
@@ -146,44 +148,6 @@ async function getBookCover(book) {
   }
 }
 
-// async function createBookCard(book) {
-//   const col = document.createElement("div");
-//   col.className = "col-sm-6 col-md-4";
-
-//   const card = document.createElement("div");
-//   card.className = "card h-100";
-
-//   // Image
-//   const img = document.createElement("img");
-//   img.className = "card-img-top";
-//   img.alt = `${book.title} cover`;
-
-//   const coverUrl = await getBookCover(book);
-//   img.src = coverUrl || "images/book-placeholder.png";
-
-//   img.onerror = () => {
-//     img.src = "images/book-placeholder.png";
-//   };
-
-//   // Card body
-//   const body = document.createElement("div");
-//   body.className = "card-body";
-
-//   body.innerHTML = `
-//     <h5 class="card-title">${book.title}</h5>
-//     <h6 class="card-subtitle mb-2 text-muted">${book.author} (${book.year})</h6>
-//     <p class="card-text">${book.description}</p>
-//     <span class="badge bg-secondary">${book.genre}</span>
-//     <span class="badge bg-primary ms-1">${book.rating} ★</span>
-//   `;
-
-//   card.appendChild(img);
-//   card.appendChild(body);
-//   col.appendChild(card);
-
-//   return col;
-// }
-
 async function createBookCard(book) {
   const col = document.createElement("div");
   col.className = "col-sm-6 col-md-4";
@@ -191,25 +155,25 @@ async function createBookCard(book) {
   const card = document.createElement("div");
   card.className = "card h-100";
 
+  // Image
   const img = document.createElement("img");
   img.className = "card-img-top";
   img.alt = `${book.title} cover`;
 
   const coverUrl = await getBookCover(book);
-  img.src = coverUrl || "images/book-placeholder.png";
+  img.src = coverUrl || "assets/No-Image-Placeholder.svg";
 
-  img.onerror = () => {
-    img.src = "images/book-placeholder.png";
+  img.onerror = function () {
+    img.src = "assets/No-Image-Placeholder.svg";
   };
 
+  // Card body
   const body = document.createElement("div");
   body.className = "card-body";
 
   body.innerHTML = `
     <h5 class="card-title">${book.title}</h5>
-    <h6 class="card-subtitle mb-2 text-muted">
-      ${book.author} (${book.year})
-    </h6>
+    <h6 class="card-subtitle mb-2 text-muted">${book.author} (${book.year})</h6>
     <p class="card-text">${book.description}</p>
     <span class="badge bg-secondary">${book.genre}</span>
     <span class="badge bg-primary ms-1">${book.rating} ★</span>
@@ -222,29 +186,28 @@ async function createBookCard(book) {
   return col;
 }
 
-const books = [
-  {
-    title: "Dune",
-    author: "Frank Herbert",
-    year: 1965,
-    genre: "Science Fiction",
-    rating: 4.5,
-    description: "Epic science fiction novel set on the desert planet Arrakis.",
-  },
-];
+// const booksTemp = [
+//   {
+//     title: "Dune",
+//     author: "Frank Herbert",
+//     year: 1965,
+//     genre: "Science Fiction",
+//     rating: 4.5,
+//     description: "Epic science fiction novel set on the desert planet Arrakis.",
+//   },
+// ];
 
-(async () => {
-  const results = document.getElementById("results");
+// (async function () {
+//   const results = document.getElementById("results");
 
-  for (const book of books) {
-    const card = await createBookCard(book);
-    results.appendChild(card);
-  }
-})();
+//   for (const book of booksTemp) {
+//     const card = await createBookCard(book);
+//     results.appendChild(card);
+//   }
+// })();
 
 /**
  * to reset later:
  * localStorage.removeItem(COVER_CACHE_KEY);
  * coverCache.clear();
  */
-/* ------------------------- EXPERIMENTAL SECTION END ------------------------- */

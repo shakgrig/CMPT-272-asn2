@@ -67,13 +67,17 @@
   </header>
   <!-- Header End -->
   <!-- PROF EXAMPLE Start -->
-  <input id="fileInput" type="file" name="file">
-  <pre id="fileContent"></pre>
+  <!--  <input id="fileInput" type="file" name="file">-->
+  <!--  <pre id="fileContent"></pre>-->
   <section id="files" class="mb-4">
     <div class="card shadow-sm">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <span class="fw-semibold">File Uploads: FileReader + input type="file"</span>
-        <span class="badge text-bg-success">client-side file reading</span>
+      <div class="card-header d-flex align-items-center flex-wrap justify-content-start">
+        <span class="fw-semibold me-auto">File Uploads: FileReader + input type="file"</span>
+        <div class="d-flex flex-wrap gap-1">
+          <span class="badge text-bg-secondary">JavaScript</span>
+          <span class="badge text-bg-secondary">CSV</span>
+          <span class="badge text-bg-secondary">Bootstrap</span>
+        </div>
       </div>
       <div class="card-body">
         <p class="text-muted mb-3">
@@ -82,8 +86,10 @@
         <form action="#" class="mb-3">
           <label for="fileUpload" class="form-label">Upload a CSV file:</label>
           <input type="file" id="fileUpload" name="fileUpload" class="form-control" accept=".csv">
+          <!-- <button type="submit">Submit</button> -->
         </form>
-        <div id="fileInfo" class="alert alert-light border mb-0" style="white-space: pre-wrap;"></div>
+<!--        <div id="fileInfo" class="alert alert-light border mb-0" style="white-space: pre-wrap;"></div>-->
+        <div id="liveAlertPlaceholder"></div>
       </div>
     </div>
   </section>
@@ -96,7 +102,8 @@
             <article class="gallery-card">
               <figure class="gallery-figure">
                 <div class="gallery-image">
-                  <img class="gallery-thumb" src="./images/0.jpg" alt="Basics of Web Design by Felke-Morris">
+                  <img class="gallery-thumb" src="assets/No-Image-Placeholder.svg"
+                    alt="Basics of Web Design by Felke-Morris">
                   <a class="see-more-link add-to-cart-btn small" href="./pages/book-1.html">See more</a>
                 </div>
                 <figcaption class="gallery-caption">
@@ -114,143 +121,21 @@
       <div class="products-grid">
         <div class="product-card">
           <div class="product-link">
-            <img src="../images/is_this_poison.png" alt="Is This Poison book cover">
+            <img src="assets/No-Image-Placeholder.svg" alt="Is This Poison book cover">
           </div>
           <p class="h3 product-name">Is This Poison?</p>
         </div>
         <div class="product-card">
           <div class="product-link">
-            <img src="../images/where_am_i.png" alt="Where Am I book cover">
+            <img src="assets/No-Image-Placeholder.svg" alt="Where Am I book cover">
           </div>
           <p class="h3 product-name">Where Am I?</p>
         </div>
       </div>
     </section>
-    <!--    <section class="about-section" id="about">-->
-    <!--      <div class="container">-->
-    <!--        <h2>About Us</h2>-->
-    <!--        <p>-->
-    <!--        </p>-->
-    <!--      </div>-->
-    <!--    </section>-->
-    <section class="testing-area" id="testing">
-      <div class="container mt-3">
-        <button type="button" class="btn">Basic</button>
-        <button type="button" class="btn btn-primary">Primary</button>
-        <button type="button" class="btn btn-secondary">Secondary</button>
-        <button type="button" class="btn btn-success">Success</button>
-        <button type="button" class="btn btn-info">Info</button>
-        <button type="button" class="btn btn-warning">Warning</button>
-        <button type="button" class="btn btn-danger">Danger</button>
-        <button type="button" class="btn btn-dark">Dark</button>
-        <button type="button" class="btn btn-light">Light</button>
-        <button type="button" class="btn btn-link">Link</button>
-      </div>
-      <div class="container mt-3">
-        <p class="h2">Animated Alerts</p>
-        <p>The .fade and .show classes adds a fading effect when closing the alert message.</p>
-        <div class="alert alert-success alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Success!</strong> This alert box could indicate a successful or positive action.
-        </div>
-        <div class="alert alert-info alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Info!</strong> This alert box could indicate a neutral informative change or action.
-        </div>
-        <div class="alert alert-warning alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Warning!</strong> This alert box could indicate a warning that might need attention.
-        </div>
-        <div class="alert alert-danger alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Danger!</strong> This alert box could indicate a dangerous or potentially negative action.
-        </div>
-        <div class="alert alert-primary alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Primary!</strong> Indicates an important action.
-        </div>
-        <div class="alert alert-secondary alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Secondary!</strong> Indicates a slightly less important action.
-        </div>
-        <div class="alert alert-dark alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Dark!</strong> Dark grey alert.
-        </div>
-        <div class="alert alert-light alert-dismissible fade show">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>Light!</strong> Light grey alert.
-        </div>
-      </div>
-      <!-- Button to Open the Modal -->
-      <div class="container mt-3">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
-          Open modal
-        </button>
-      </div>
-
-      <!-- The Modal -->
-      <div class="modal" id="myModal">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-
-            <!-- Modal Header -->
-            <div class="modal-header">
-              <h4 class="modal-title">Modal Heading</h4>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <!-- Modal body -->
-            <div class="modal-body">
-              Modal body..
-            </div>
-
-            <!-- Modal footer -->
-            <div class="modal-footer">
-              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-      <div class="container mt-3">
-        <h2>Basic Card</h2>
-        <div class="card" style="max-width:400px">
-          <div class="card-body">Basic card</div>
-        </div>
-      </div>
-      <div class="container mt-3">
-        <h2>Card Image</h2>
-        <p>Image at the top (card-img-top):</p>
-        <div class="card" style="max-width:400px">
-          <img class="card-img-top" src="../bootstrap4/img_avatar1.png" alt="Card image" style="width:100%">
-          <div class="card-body">
-            <h4 class="card-title">John Doe</h4>
-            <p class="card-text">Some example text some example text. John Doe is an architect and engineer</p>
-            <a href="#" class="btn btn-primary">See Profile</a>
-          </div>
-        </div>
-        <br>
-        <p>Image at the bottom (card-img-bottom):</p>
-        <div class="card" style="max-width:400px">
-          <div class="card-body">
-            <h4 class="card-title">Jane Doe</h4>
-            <p class="card-text">Some example text some example text. Jane Doe is an architect and engineer</p>
-            <a href="#" class="btn btn-primary">See Profile</a>
-          </div>
-          <img class="card-img-bottom" src="../bootstrap4/img_avatar6.png" alt="Card image" style="width:100%">
-        </div>
-      </div>
-      <!-- <div class="container mt-3">
-        <h2>Basic Card</h2>
-        <div id="results" class="card" style="max-width:400px">
-          <div class="card-body">Basic card</div>
-        </div>
-      </div> -->
-      <div class="container my-4">
-        <div id="results" class="row g-3"></div>
-      </div>
-    </section>
+    <div class="container my-4">
+      <div id="results" class="row g-3"></div>
+    </div>
   </main>
   <!-- Footer Start -->
   <footer class="site-footer">
