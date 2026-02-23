@@ -72,6 +72,14 @@ function init() {
               results.appendChild(card);
             }
 
+            if (typeof preloadModalImagesInBackground === "function") {
+              requestAnimationFrame(() => {
+                preloadModalImagesInBackground(catalogItems, {
+                  concurrency: 2,
+                });
+              });
+            }
+
             // fileInfo.className = "alert alert-light border mb-0";
             appendAlert("sucess?", "light");
           } catch (error) {
@@ -114,50 +122,6 @@ if (alertTrigger) {
   });
 }
 
-// function handleFileSelect(event) {
-//   const reader = new FileReader();
-//   reader.onload = handleFileLoad;
-//   reader.readAsText(event.target.files[0]);
-// }
-
-// function handleFileLoad(event) {
-//   console.log(event);
-//   document.getElementById("fileContent").textContent = event.target.result;
-// }
-
-// if (fileInput) {
-//   fileInput.addEventListener("change", function (event) {
-//     console.log("File input changed.");
-//     const file = event.target.files[0];
-//     if (file) {
-//       if (!file.type.includes('text') && !file.name.endsWith('.csv')) {
-//         fileInfo.innerHTML = "Please upload a valid text or CSV file.";
-//         fileInfo.className = "alert alert-danger mt-3";
-//         return;
-//       }
-//       const reader = new FileReader();
-//       reader.onload = function (e) {
-//         try {
-//           const fileContent = e.target.result.split('\n').map(line => line.split(','));
-//
-//           fileInfo.innerHTML = fileContent.map(row => row.join(', ')).join('<br>');
-//           fileInfo.className = "alert alert-light border mb-0";
-//         } catch (error) {
-//           console.error("Error parsing file:", error);
-//           fileInfo.innerHTML = "Error parsing file. Please ensure it's a valid CSV.";
-//           fileInfo.className = "alert alert-danger mt-3";
-//         }
-//       };
-//       reader.readAsText(file);
-//     } else {
-//       console.log("No file selected.");
-//       fileInfo.innerHTML = "";
-//     }
-//   });
-// } else {
-//   console.error("fileInput element not found!");
-// }
-
 const types = {
   book: "book",
   movie: "movie",
@@ -199,20 +163,15 @@ class CatalogItem {
   } // returns a DOM subtree based on the catalogue item
 }
 
-// for placeholder_viewboxed_600x900_combo.svg
-// const Embed = `${<a title="Ranjithsiji, CC BY-SA 4.0 &lt;https://creativecommons.org/licenses/by-sa/4.0&gt;, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:placeholder_viewboxed_600x900_combo.svg"><img width="256" alt="No-Image-Placeholder" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/placeholder_viewboxed_600x900_combo.svg/256px-placeholder_viewboxed_600x900_combo.svg.png?20200912122019" /></a>}`;
-// const Attribution = `${<a href="https://commons.wikimedia.org/wiki/File:placeholder_viewboxed_600x900_combo.svg">Ranjithsiji</a>}, ${<a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>}, via Wikimedia Commons`;
-
-const testCatalogItem = new CatalogItem(
-  "hello",
-  undefined,
-  undefined,
-  undefined,
-);
-
-console.log("console message test");
-console.log(testCatalogItem);
-console.log(testCatalogItem.toLocalString());
+// const testCatalogItem = new CatalogItem(
+//   "hello",
+//   undefined,
+//   undefined,
+//   undefined,
+// );
+// console.log("console message test");
+// console.log(testCatalogItem);
+// console.log(testCatalogItem.toLocalString());
 
 function footer() {
   const lastUpdate = new Date(2026, 1, 20);
