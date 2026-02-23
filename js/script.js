@@ -30,12 +30,28 @@ function init() {
         const reader = new FileReader();
         reader.onload = async function (e) {
           try {
-            const fileContent = e.target.result
+            const parsedRows = e.target.result
               // .split("\n")
               // .map((line) => line.split(",")); // AI helped here to make better
               .split(/\r?\n/)
               .filter((line) => line.trim() !== "")
               .map((line) => line.split(",").map((cell) => cell.trim()));
+
+            const header = parsedRows[0]?.map((cell) => cell.toLowerCase());
+            const hasExpectedHeader =
+              Array.isArray(header) &&
+              header[0] === "title" &&
+              header[1] === "type" &&
+              header[2] === "author" &&
+              header[3] === "year" &&
+              header[4] === "genre" &&
+              header[5] === "rating" &&
+              header[6] === "description";
+
+            const fileContent = hasExpectedHeader
+              ? parsedRows.slice(1)
+              : parsedRows;
+
             console.log(
               "fileContent: ",
               fileContent.map((row) => new CatalogItem(...row)),
@@ -43,6 +59,7 @@ function init() {
             const catalogItems = fileContent.map(
               (row) => new CatalogItem(...row),
             );
+            globalThis.LAST_CATALOG_ITEMS = catalogItems;
             // console.log("CatalogItems: ", CatalogItems.values().forEach((v) => v.toLocaleString()));
             // CatalogItems.entries().forEach((v) => console.log("CatalogItems: ", v.toLocaleString()));
             // CatalogItems.entries().forEach((v) => console.log("CatalogItems: ", v[1].toLocalString()));

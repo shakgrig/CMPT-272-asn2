@@ -1,0 +1,5 @@
+/* Assignment 2 Specific CSS */
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}

@@ -1,9 +1,8 @@
 "use strict";
 
 const COVER_CACHE_KEY = "bookCoverCache";
-const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 const WIKIPEDIA_REST_SUMMARY_URL =
-    "https://en.wikipedia.org/api/rest_v1/page/summary";
+  "https://en.wikipedia.org/api/rest_v1/page/summary";
 const DEFAULT_PLACEHOLDER_SRC =
   "assets/placeholder_viewboxed_600x900_combo.svg";
 
@@ -42,7 +41,7 @@ function persistCoverCache() {
   );
 }
 
-const CACHE_VERSION = "v12.5"; // change when input format changes
+const CACHE_VERSION = "v13"; // change when input format changes
 
 const previousCacheVersion = localStorage.getItem("cacheVersion");
 if (previousCacheVersion && previousCacheVersion !== CACHE_VERSION) {
@@ -120,27 +119,6 @@ async function fetchCoverWithCache(cacheKey, fetcher) {
   }
 }
 
-async function fetchWikipediaThumbnailByTitle(title, thumbSize = 500) {
-  const cleanTitle = String(title || "").trim();
-  if (!cleanTitle) return null;
-
-  const params = new URLSearchParams({
-    action: "query",
-    titles: cleanTitle,
-    prop: "pageimages",
-    piprop: "thumbnail",
-    pithumbsize: String(thumbSize),
-    redirects: "1",
-    format: "json",
-    formatversion: "2",
-    origin: "*",
-  });
-
-  const data = await fetchJson(`${WIKIPEDIA_API_URL}?${params}`);
-  const page = Array.isArray(data?.query?.pages) ? data.query.pages[0] : null;
-  return page?.thumbnail?.source || null;
-}
-
 async function fetchWikipediaLeadImageByTitle(title) {
   const cleanTitle = String(title || "").trim();
   if (!cleanTitle) return null;
@@ -156,55 +134,18 @@ async function fetchWikipediaLeadImageByTitle(title) {
   }
 }
 
-async function searchWikipediaTitle(searchTerm) {
-  const cleanTerm = String(searchTerm || "").trim();
-  if (!cleanTerm) return null;
-
-  const params = new URLSearchParams({
-    action: "query",
-    list: "search",
-    srsearch: cleanTerm,
-    srwhat: "title",
-    srlimit: "1",
-    format: "json",
-    origin: "*",
-  });
-
-  const data = await fetchJson(`${WIKIPEDIA_API_URL}?${params}`);
-  return data?.query?.search?.[0]?.title || null;
-}
-
 async function fetchWikipediaThumbnail(item, typeHint = "") {
   const title = String(item?.title || "").trim();
   if (!title) return null;
 
-  // const author = String(item?.author || "").trim();
   const candidates = [title];
   if (typeHint) {
     candidates.push(`${title} (${typeHint})`);
-    // candidates.push(`${title} ${typeHint}`);
   }
-  // if (author) {
-  //   candidates.push(`${title} (${author})`);
-  //   candidates.push(`${title} ${author}`);
-  // }
 
   for (const candidate of candidates) {
     const leadImage = await fetchWikipediaLeadImageByTitle(candidate);
     if (leadImage) return leadImage;
-
-    const directThumb = await fetchWikipediaThumbnailByTitle(candidate);
-    if (directThumb) return directThumb;
-
-    const foundTitle = await searchWikipediaTitle(candidate);
-    if (!foundTitle) continue;
-
-    // const leadImageFromSearch =
-    //     await fetchWikipediaLeadImageByTitle(foundTitle);
-    // if (leadImageFromSearch) return leadImageFromSearch;
-
-    const thumbFromSearch = await fetchWikipediaThumbnailByTitle(foundTitle);
-    if (thumbFromSearch) return thumbFromSearch;
   }
 
   return null;
