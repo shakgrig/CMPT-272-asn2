@@ -8,6 +8,7 @@ const fileInput = document.getElementById("fileUpload");
 const fileInfo = document.getElementById("fileInfo");
 
 function init() {
+  // clearLocalStorage();
   // document
   //   .getElementById("fileInput")
   //   .addEventListener("change", handleFileSelect, false);
@@ -181,9 +182,9 @@ class CatalogItem {
   } // returns a DOM subtree based on the catalogue item
 }
 
-// for No-Image-Placeholder.svg
-// const Embed = `${<a title="Ranjithsiji, CC BY-SA 4.0 &lt;https://creativecommons.org/licenses/by-sa/4.0&gt;, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"><img width="256" alt="No-Image-Placeholder" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/256px-No-Image-Placeholder.svg.png?20200912122019" /></a>}`;
-// const Attribution = `${<a href="https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg">Ranjithsiji</a>}, ${<a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>}, via Wikimedia Commons`;
+// for placeholder_viewboxed_600x900_combo.svg
+// const Embed = `${<a title="Ranjithsiji, CC BY-SA 4.0 &lt;https://creativecommons.org/licenses/by-sa/4.0&gt;, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:placeholder_viewboxed_600x900_combo.svg"><img width="256" alt="No-Image-Placeholder" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/placeholder_viewboxed_600x900_combo.svg/256px-placeholder_viewboxed_600x900_combo.svg.png?20200912122019" /></a>}`;
+// const Attribution = `${<a href="https://commons.wikimedia.org/wiki/File:placeholder_viewboxed_600x900_combo.svg">Ranjithsiji</a>}, ${<a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>}, via Wikimedia Commons`;
 
 const testCatalogItem = new CatalogItem(
   "hello",
