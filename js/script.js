@@ -8,7 +8,7 @@ const fileInput = document.getElementById("fileUpload");
 const fileInfo = document.getElementById("fileInfo");
 
 function init() {
-  // clearLocalStorage();
+  clearLocalStorage();
   // document
   //   .getElementById("fileInput")
   //   .addEventListener("change", handleFileSelect, false);

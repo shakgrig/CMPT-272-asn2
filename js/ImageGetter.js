@@ -1,13 +1,9 @@
 "use strict";
 
 const COVER_CACHE_KEY = "bookCoverCache";
-const API_KEY_NAMES = {
-  omdb: "OMDB_API_KEY",
-  rawg: "RAWG_API_KEY",
-};
 const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 const WIKIPEDIA_REST_SUMMARY_URL =
-  "https://en.wikipedia.org/api/rest_v1/page/summary";
+    "https://en.wikipedia.org/api/rest_v1/page/summary";
 const DEFAULT_PLACEHOLDER_SRC =
   "assets/placeholder_viewboxed_600x900_combo.svg";
 
@@ -46,7 +42,7 @@ function persistCoverCache() {
   );
 }
 
-const CACHE_VERSION = "v8"; // change when input format changes
+const CACHE_VERSION = "v12.5"; // change when input format changes
 
 const previousCacheVersion = localStorage.getItem("cacheVersion");
 if (previousCacheVersion && previousCacheVersion !== CACHE_VERSION) {
@@ -55,12 +51,6 @@ if (previousCacheVersion && previousCacheVersion !== CACHE_VERSION) {
 }
 
 localStorage.setItem("cacheVersion", CACHE_VERSION);
-
-function getApiKey(keyName) {
-  const fromGlobalConfig = globalThis.APP_CONFIG?.[keyName];
-  const fromStorage = localStorage.getItem(keyName);
-  return String(fromGlobalConfig || fromStorage || "").trim();
-}
 
 function normalizeType(type) {
   return String(type || "")
@@ -151,6 +141,21 @@ async function fetchWikipediaThumbnailByTitle(title, thumbSize = 500) {
   return page?.thumbnail?.source || null;
 }
 
+async function fetchWikipediaLeadImageByTitle(title) {
+  const cleanTitle = String(title || "").trim();
+  if (!cleanTitle) return null;
+
+  const normalizedTitle = cleanTitle.replace(/\s+/g, " ").replace(/ /g, "_");
+  const url = `${WIKIPEDIA_REST_SUMMARY_URL}/${encodeURIComponent(normalizedTitle)}`;
+
+  try {
+    const data = await fetchJson(url);
+    return data?.thumbnail?.source || data?.originalimage?.source || null;
+  } catch {
+    return null;
+  }
+}
+
 async function searchWikipediaTitle(searchTerm) {
   const cleanTerm = String(searchTerm || "").trim();
   if (!cleanTerm) return null;
@@ -173,17 +178,31 @@ async function fetchWikipediaThumbnail(item, typeHint = "") {
   const title = String(item?.title || "").trim();
   if (!title) return null;
 
-  const author = String(item?.author || "").trim();
+  // const author = String(item?.author || "").trim();
   const candidates = [title];
-  if (typeHint) candidates.push(`${title} ${typeHint}`);
-  if (author) candidates.push(`${title} ${author}`);
+  if (typeHint) {
+    candidates.push(`${title} (${typeHint})`);
+    // candidates.push(`${title} ${typeHint}`);
+  }
+  // if (author) {
+  //   candidates.push(`${title} (${author})`);
+  //   candidates.push(`${title} ${author}`);
+  // }
 
   for (const candidate of candidates) {
+    const leadImage = await fetchWikipediaLeadImageByTitle(candidate);
+    if (leadImage) return leadImage;
+
     const directThumb = await fetchWikipediaThumbnailByTitle(candidate);
     if (directThumb) return directThumb;
 
     const foundTitle = await searchWikipediaTitle(candidate);
     if (!foundTitle) continue;
+
+    // const leadImageFromSearch =
+    //     await fetchWikipediaLeadImageByTitle(foundTitle);
+    // if (leadImageFromSearch) return leadImageFromSearch;
+
     const thumbFromSearch = await fetchWikipediaThumbnailByTitle(foundTitle);
     if (thumbFromSearch) return thumbFromSearch;
   }
@@ -208,24 +227,6 @@ function getCover(item) {
       return Promise.resolve(null);
   }
 }
-
-/* {
-  type: "book" | "movie" | "game",
-  title,
-  author,     // books
-  year,
-  genre,
-  rating,
-  description
-}
-
-<div class="card placeholder-glow">
-  <div class="card-img-top placeholder"></div>
-  <div class="card-body">
-    <span class="placeholder col-6"></span>
-    <span class="placeholder col-4"></span>
-  </div>
-</div> */
 
 function scoreResult(doc, book) {
   let score = 0;
@@ -274,97 +275,17 @@ async function getBookCover(book) {
   });
 }
 
-async function fetchMoviePosterFromOMDb(movie) {
-  const apiKey = getApiKey(API_KEY_NAMES.omdb);
-  if (!apiKey) {
-    return await fetchWikipediaThumbnail(movie, "film");
-  }
-
-  try {
-    const params = new URLSearchParams({
-      apikey: apiKey,
-      t: String(movie?.title || ""),
-      type: "movie",
-      r: "json",
-    });
-    if (isValidYear(movie?.year)) {
-      params.set("y", String(movie.year));
-    }
-
-    const data = await fetchJson(`https://www.omdbapi.com/?${params}`);
-    if (!data || data.Response === "False") {
-      return await fetchWikipediaThumbnail(movie, "film");
-    }
-    if (!data.Poster || data.Poster === "N/A") {
-      return await fetchWikipediaThumbnail(movie, "film");
-    }
-    return data.Poster;
-  } catch {
-    return await fetchWikipediaThumbnail(movie, "film");
-  }
-}
-
 async function getMoviePoster(movie) {
   const cacheKey = `movie|${movie.title}|${movie.year}`;
   return fetchCoverWithCache(cacheKey, async () => {
-    return await fetchMoviePosterFromOMDb(movie);
+    return await fetchWikipediaThumbnail(movie, "film");
   });
-}
-
-function scoreRawgResult(game, queryTitle, queryYear) {
-  const title = String(game?.name || "").toLowerCase();
-  const target = String(queryTitle || "").toLowerCase();
-  let score = 0;
-
-  if (title === target) score += 4;
-  else if (title.startsWith(target)) score += 2;
-  else if (title.includes(target)) score += 1;
-
-  const releasedYear = Number(String(game?.released || "").slice(0, 4));
-  if (Number.isFinite(queryYear) && releasedYear === queryYear) score += 1;
-
-  return score;
-}
-
-async function fetchGameCoverFromRAWG(game) {
-  const apiKey = getApiKey(API_KEY_NAMES.rawg);
-  if (!apiKey) {
-    return await fetchWikipediaThumbnail(game, "video game");
-  }
-
-  try {
-    const params = new URLSearchParams({
-      key: apiKey,
-      search: String(game?.title || ""),
-      search_precise: "true",
-      page_size: "10",
-    });
-
-    const data = await fetchJson(`https://api.rawg.io/api/games?${params}`);
-    const results = Array.isArray(data?.results) ? data.results : [];
-    if (!results.length) {
-      return await fetchWikipediaThumbnail(game, "video game");
-    }
-
-    const queryYear = isValidYear(game?.year) ? Number(game.year) : null;
-    const best = results
-      .map((r) => ({ r, score: scoreRawgResult(r, game?.title, queryYear) }))
-      .sort((a, b) => b.score - a.score)[0]?.r;
-
-    return (
-      best?.background_image ||
-      best?.background_image_additional ||
-      (await fetchWikipediaThumbnail(game, "video game"))
-    );
-  } catch {
-    return await fetchWikipediaThumbnail(game, "video game");
-  }
 }
 
 async function getGameCover(game) {
   const cacheKey = `game|${game.title}|${game.year}`;
   return fetchCoverWithCache(cacheKey, async () => {
-    return await fetchGameCoverFromRAWG(game);
+    return await fetchWikipediaThumbnail(game, "video game");
   });
 }
 
