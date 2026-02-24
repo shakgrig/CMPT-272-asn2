@@ -11,9 +11,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" defer></script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/style_new.css">
+  <script src="js/PlaceholderSvg.js" defer></script>
   <script src="js/ImageGetter.js" defer></script>
   <script src="js/PaperMetadataProvider.js" defer></script>
-  <script src="js/InferCoverSource.js" defer></script>
   <script src="js/script.js" defer></script>
 </head>
 
@@ -28,24 +28,6 @@
           <a href="./index.html">Totally Real Bookstore</a>
         </p>
       </div>
-      <!-- <nav class="main-nav" aria-label="main-nav">
-        <ul>
-          <li>
-            <a href="#gallery">Gallery</a>
-          </li>
-          <li>
-            <a href="#about">About</a>
-          </li>
-        </ul>
-      </nav> -->
-      <!-- <div class="header-icons">
-        <a href="#account"
-          onclick="alert('Sorry, our account server caught fire, please try again later.'); return false;"
-          class="icon-link">&#128100;</a>
-        <a href="#cart"
-          onclick="alert('Sorry, our payment processing is down right now, please try again later.'); return false;"
-          class="icon-link">&#128722; <span class="cart-count">$0.00</span></a>
-      </div> -->
     </div>
     <!-- Theme Controller Menu -->
     <div class="theme-menu">
@@ -80,24 +62,18 @@
         </div>
       </div>
       <div class="card-body">
-        <!-- <fieldset class="d-flex flex-wrap gap-1"> -->
         <fieldset class="row g-3">
           <legend class="small mb-3">
             Read a local file using an <code>&lt;input type="file"&gt;</code> and <code>FileReader</code>.
           </legend>
-          <!-- <form action="#" class="mb-3"> -->
           <div class="col-auto">
             <label for="fileUpload" class="form-label">Upload a CSV file:</label>
             <input type="file" id="fileUpload" name="fileUpload" class="form-control" accept=".csv">
-            <!-- <button type="submit">Submit</button> -->
-            <!-- </form> -->
           </div>
-          <!-- TODO: Make selections start disable, and unlock after upload. -->
           <div class="col-auto mb-3">
             <label for="typeSelect" class="form-label">Type</label>
             <select id="typeSelect" class="form-select">
               <option>All</option>
-              <option>NEED_TO_GENERATE_THE_OTHERS_FROM_INPUT</option>
             </select>
           </div>
           <div class="col-auto mb-3">
@@ -114,7 +90,6 @@
             </select>
           </div>
         </fieldset>
-        <!--        <div id="fileInfo" class="alert alert-light border mb-0" style="white-space: pre-wrap;"></div>-->
         <div id="liveAlertPlaceholder"></div>
       </div>
     </div>

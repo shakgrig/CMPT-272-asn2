@@ -1,109 +1,118 @@
 "use strict";
 
-// import "./ImageGetter.js";
-
 window.addEventListener("load", init);
 
 const fileInput = document.getElementById("fileUpload");
 const fileInfo = document.getElementById("fileInfo");
-const DEFAULT_PLACEHOLDER_IMG =
-  "assets/placeholder_viewboxed_600x900_combo.svg";
+const typeSelect = document.getElementById("typeSelect");
+const sortSelect = document.getElementById("sortSelect");
+const resultsContainer = document.getElementById("results");
+const tempHeader = document.querySelector(".temp-header");
+const tempSubHeader = document.querySelector(".temp-sub-header");
+const DEFAULT_PLACEHOLDER_IMG = "assets/placeholder_viewboxed_600x900.svg";
+let loadedCatalogItems = [];
+
+function getDefaultPlaceholderImg() {
+  if (typeof getPlaceholderSrc === "function") {
+    return getPlaceholderSrc();
+  }
+
+  return DEFAULT_PLACEHOLDER_IMG;
+}
+
+function isPlaceholderImageSource(src) {
+  const value = String(src || "");
+  if (!value) return false;
+  if (value.startsWith("data:image/svg+xml")) return true;
+  return value.includes("placeholder_viewboxed_600x900");
+}
+
+function createInlinePlaceholderElement(
+  className = "",
+  altText = "Item cover",
+) {
+  if (typeof createPlaceholderSvgElement !== "function") return null;
+
+  const svg = createPlaceholderSvgElement(className);
+  if (!svg) return null;
+
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", altText);
+  return svg;
+}
 
 function init() {
-  if (typeof clearLocalStorage === "function") {
-    // clearLocalStorage();
-  }
-  // document
-  //   .getElementById("fileInput")
-  //   .addEventListener("change", handleFileSelect, false);
-  // document
-  //   .getElementById("fileUpload")
-  //   .addEventListener("change", handleFileSelect, false);
   footer();
-  // makeCard();
-  if (fileInput) {
-    fileInput.addEventListener("change", function (event) {
-      console.log("File input changed.");
-      const file = event.target.files[0];
-      if (file) {
-        if (!file.type.includes("text") && !file.name.endsWith(".csv")) {
-          fileInfo.innerHTML = "Please upload a valid text or CSV file.";
-          fileInfo.className = "alert alert-danger mt-3";
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = async function (e) {
-          try {
-            const parsedRows = e.target.result
-              // .split("\n")
-              // .map((line) => line.split(",")); // AI helped here to make better
-              .split(/\r?\n/)
-              .filter((line) => line.trim() !== "")
-              .map((line) => line.split(",").map((cell) => cell.trim()));
 
-            const header = parsedRows[0]?.map((cell) => cell.toLowerCase());
-            const hasExpectedHeader =
-              Array.isArray(header) &&
-              header[0] === "title" &&
-              header[1] === "type" &&
-              header[2] === "author" &&
-              header[3] === "year" &&
-              header[4] === "genre" &&
-              header[5] === "rating" &&
-              header[6] === "description";
+  typeSelect?.addEventListener("change", applyFiltersAndSort);
+  sortSelect?.addEventListener("change", applyFiltersAndSort);
 
-            const fileContent = hasExpectedHeader
-              ? parsedRows.slice(1)
-              : parsedRows;
-
-            console.log(
-              "fileContent: ",
-              fileContent.map((row) => new CatalogItem(...row)),
-            );
-            const catalogItems = fileContent.map(
-              (row) => new CatalogItem(...row),
-            );
-            globalThis.LAST_CATALOG_ITEMS = catalogItems;
-            // console.log("CatalogItems: ", CatalogItems.values().forEach((v) => v.toLocaleString()));
-            // CatalogItems.entries().forEach((v) => console.log("CatalogItems: ", v.toLocaleString()));
-            // CatalogItems.entries().forEach((v) => console.log("CatalogItems: ", v[1].toLocalString()));
-            // CatalogItems.entries().forEach((v) => v.toCard());
-            const results = document.getElementById("results");
-            results.innerHTML = "";
-
-            for (const item of catalogItems) {
-              const card = await item.toCard();
-              results.appendChild(card);
-            }
-
-            requestAnimationFrame(() => {
-              CatalogItem.preloadCoverImagesInBackground(catalogItems, {
-                concurrency: 2,
-              });
-              CatalogItem.preloadPaperMetadataInBackground(catalogItems, {
-                concurrency: 1,
-              });
-            });
-
-            // fileInfo.className = "alert alert-light border mb-0";
-            appendAlert("Successfully loaded CSV", "success");
-          } catch (error) {
-            console.error("Error parsing file:", error);
-            // fileInfo.innerHTML = "Error parsing file. Please ensure it's a valid CSV.";
-            // fileInfo.innerHTML = `Error parsing file: ${error}`;
-            // fileInfo.className = "alert alert-danger mt-3";
-            appendAlert(`Error parsing file: ${error}`, "danger");
-          }
-        };
-        reader.readAsText(file);
-      } else {
-        console.log("No file selected.");
-        // fileInfo.innerHTML = "";
-      }
-    });
-  } else {
+  if (!fileInput) {
     console.error("fileInput element not found!");
+    return;
   }
+
+  fileInput.addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.includes("text") && !file.name.endsWith(".csv")) {
+      if (fileInfo) {
+        fileInfo.innerHTML = "Please upload a valid text or CSV file.";
+        fileInfo.className = "alert alert-danger mt-3";
+      } else {
+        appendAlert("Please upload a valid text or CSV file.", "danger");
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+      try {
+        const parsedRows = e.target.result
+          .split(/\r?\n/)
+          .filter((line) => line.trim() !== "")
+          .map((line) => line.split(",").map((cell) => cell.trim()));
+
+        const header = parsedRows[0]?.map((cell) => cell.toLowerCase());
+        const hasExpectedHeader =
+          Array.isArray(header) &&
+          header[0] === "title" &&
+          header[1] === "type" &&
+          header[2] === "author" &&
+          header[3] === "year" &&
+          header[4] === "genre" &&
+          header[5] === "rating" &&
+          header[6] === "description";
+
+        const rows = hasExpectedHeader ? parsedRows.slice(1) : parsedRows;
+        const catalogItems = rows.map((row) => new CatalogItem(...row));
+        loadedCatalogItems = catalogItems;
+        window.LAST_CATALOG_ITEMS = catalogItems;
+
+        populateTypeOptions(catalogItems);
+
+        for (const item of catalogItems) {
+          item.cardElement = await item.toCard();
+        }
+
+        applyFiltersAndSort();
+        hideTempHeaders();
+
+        requestAnimationFrame(() => {
+          CatalogItem.preloadCoverImagesInBackground(catalogItems, {
+            concurrency: 1,
+          });
+        });
+
+        appendAlert("Successfully loaded CSV", "success");
+      } catch (error) {
+        console.error("Error parsing file:", error);
+        appendAlert(`Error parsing file: ${error}`, "danger");
+      }
+    };
+    reader.readAsText(file);
+  });
 }
 
 const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
@@ -120,20 +129,79 @@ function appendAlert(message, type) {
   alertPlaceholder.append(wrapper);
 }
 
-const alertTrigger = document.getElementById("liveAlertBtn");
-if (alertTrigger) {
-  alertTrigger.addEventListener("click", () => {
-    appendAlert("Nice, you triggered this alert message!", "success");
-  });
+function hideTempHeaders() {
+  tempHeader?.remove();
+  tempSubHeader?.remove();
 }
 
-const types = {
-  book: "book",
-  movie: "movie",
-  game: "game",
-  paper: "paper",
-  music: "music",
-};
+function populateTypeOptions(items) {
+  if (!typeSelect) return;
+
+  const previousType = uiNormalizeType(typeSelect.value || "all");
+  const uniqueTypes = [
+    ...new Set(items.map((item) => uiNormalizeType(item.type))),
+  ]
+    .filter(Boolean)
+    .sort();
+
+  typeSelect.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "All";
+  typeSelect.appendChild(allOption);
+
+  for (const type of uniqueTypes) {
+    const option = document.createElement("option");
+    option.value = type;
+    option.textContent = type;
+    typeSelect.appendChild(option);
+  }
+
+  typeSelect.value = uniqueTypes.includes(previousType) ? previousType : "all";
+}
+
+function compareCatalogItems(a, b, sortKey) {
+  if (sortKey === "year" || sortKey === "rating") {
+    const aNum = Number(a?.[sortKey]);
+    const bNum = Number(b?.[sortKey]);
+    const aValue = Number.isFinite(aNum) ? aNum : Number.NEGATIVE_INFINITY;
+    const bValue = Number.isFinite(bNum) ? bNum : Number.NEGATIVE_INFINITY;
+    return aValue - bValue;
+  }
+
+  const aValue = String(a?.[sortKey] ?? "");
+  const bValue = String(b?.[sortKey] ?? "");
+  return aValue.localeCompare(bValue, undefined, { sensitivity: "base" });
+}
+
+function applyFiltersAndSort() {
+  if (!resultsContainer) return;
+
+  const selectedType = uiNormalizeType(typeSelect?.value || "all");
+  const selectedSort = uiNormalizeType(sortSelect?.value || "none");
+
+  const visibleItems = loadedCatalogItems.filter((item) =>
+    item.matchesFilter({ type: selectedType }),
+  );
+
+  if (selectedSort !== "none") {
+    visibleItems.sort((a, b) => {
+      const result = compareCatalogItems(a, b, selectedSort);
+      if (result !== 0) return result;
+      return String(a.title).localeCompare(String(b.title), undefined, {
+        sensitivity: "base",
+      });
+    });
+  }
+
+  resultsContainer.innerHTML = "";
+  for (const item of visibleItems) {
+    if (item.cardElement) {
+      resultsContainer.appendChild(item.cardElement);
+    }
+  }
+}
 
 function uiNormalizeType(type) {
   return String(type || "")
@@ -141,15 +209,10 @@ function uiNormalizeType(type) {
     .toLowerCase();
 }
 
-function uiSafeText(value, fallback = "") {
-  const text = String(value ?? "").trim();
-  return text || fallback;
-}
-
 function uiSafeRating(value) {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
-  if (!Number.isFinite(n)) return String(value);
+  if (!Number.isFinite(n)) return null;
   return n.toFixed(1);
 }
 
@@ -181,23 +244,23 @@ function uiToSafeHttpUrl(url) {
 
 function highlightJSON(json) {
   const escaped = json
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
   return escaped.replace(
-      /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?/g,
-      (match, string, isKey, literal) => {
-        if (string) {
-          return isKey
-              ? `<span class="json-key">${string}</span>${isKey}`
-              : `<span class="json-string">${string}</span>`;
-        }
-        if (literal) {
-          return `<span class="json-boolean">${literal}</span>`;
-        }
-        return `<span class="json-number">${match}</span>`;
+    /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?/g,
+    (match, string, isKey, literal) => {
+      if (string) {
+        return isKey
+          ? `<span class="json-key">${string}</span>${isKey}`
+          : `<span class="json-string">${string}</span>`;
       }
+      if (literal) {
+        return `<span class="json-boolean">${literal}</span>`;
+      }
+      return `<span class="json-number">${match}</span>`;
+    },
   );
 }
 
@@ -209,11 +272,11 @@ class CatalogItem {
 
   /** @type {(title?: string, type?: string, author?: string, year?: number, genre?: string, rating?: number, description?: string) => CatalogItem} */
   constructor(
-    title = "",
-    type = "",
+    title = "Untitled",
+    type = "unknown",
     author = "",
     year = 1900,
-    genre = "",
+    genre = "N/A",
     rating = 0.0,
     description = "",
   ) {
@@ -230,16 +293,13 @@ class CatalogItem {
   }
 
   getCacheKey() {
-    return [
-      uiSafeText(this.title, ""),
-      uiSafeText(this.type, ""),
-      uiSafeText(this.author, ""),
-      String(this.year ?? ""),
-    ].join("|");
+    return [this.title, this.type, this.author, String(this.year ?? "")].join(
+      "|",
+    );
   }
 
   getSubtitle() {
-    const author = uiSafeText(this.author, "");
+    const author = this.author;
     const year = uiIsValidYear(this.year) ? String(this.year) : "";
     if (author && year) return `${author} (${year})`;
     if (author) return author;
@@ -248,25 +308,17 @@ class CatalogItem {
   }
 
   async resolveCoverImage() {
-    try {
-      if (typeof getCover === "function") {
-        const cover = await getCover(this);
-        if (cover) return cover;
-      }
-    } catch {
-      // Ignore and continue to fallback.
+    if (typeof getCover === "function") {
+      const cover = await getCover(this);
+      if (cover) return cover;
     }
 
-    try {
-      if (typeof getFallbackCoverForType === "function") {
-        const fallback = await getFallbackCoverForType(this);
-        if (fallback) return fallback;
-      }
-    } catch {
-      // Ignore and continue to default fallback.
+    if (typeof getFallbackCoverForType === "function") {
+      const fallback = await getFallbackCoverForType(this);
+      if (fallback) return fallback;
     }
 
-    return DEFAULT_PLACEHOLDER_IMG;
+    return getDefaultPlaceholderImg();
   }
 
   static preloadImageToBrowserCache(imageSrc) {
@@ -296,14 +348,19 @@ class CatalogItem {
     const pending = (async () => {
       try {
         const source = await item.resolveCoverImage();
+        if (!source || isPlaceholderImageSource(source)) {
+          // Placeholder data URIs are snapshots of current CSS values.
+          // Do not cache them long-term; regenerate on each use.
+          return getDefaultPlaceholderImg();
+        }
+
         await CatalogItem.preloadImageToBrowserCache(source);
-        const resolved = source || DEFAULT_PLACEHOLDER_IMG;
-        CatalogItem.coverResolvedMap.set(key, resolved);
-        return resolved;
+        CatalogItem.coverResolvedMap.set(key, source);
+        return source;
       } catch {
-        const resolved = DEFAULT_PLACEHOLDER_IMG;
-        CatalogItem.coverResolvedMap.set(key, resolved);
-        return resolved;
+        return getDefaultPlaceholderImg();
+      } finally {
+        CatalogItem.coverPreloadMap.delete(key);
       }
     })();
 
@@ -329,7 +386,7 @@ class CatalogItem {
         active += 1;
 
         CatalogItem.getPreloadedCover(item)
-          .catch(() => DEFAULT_PLACEHOLDER_IMG)
+          .catch(() => getDefaultPlaceholderImg())
           .finally(() => {
             active -= 1;
             runNext();
@@ -348,7 +405,10 @@ class CatalogItem {
   }
 
   static getPaperMetadataProvider() {
-    const provider = globalThis.CATALOG_PAPER_METADATA_PROVIDER;
+    const provider =
+      typeof CATALOG_PAPER_METADATA_PROVIDER !== "undefined"
+        ? CATALOG_PAPER_METADATA_PROVIDER
+        : null;
     if (!provider || typeof provider !== "object") return null;
     return provider;
   }
@@ -356,34 +416,19 @@ class CatalogItem {
   static getCachedPaperMetadata(item) {
     const provider = CatalogItem.getPaperMetadataProvider();
     if (!provider || typeof provider.getCached !== "function") return null;
-
-    try {
-      return provider.getCached(item) || null;
-    } catch {
-      return null;
-    }
+    return provider.getCached(item) || null;
   }
 
   static async getPaperMetadata(item) {
     const provider = CatalogItem.getPaperMetadataProvider();
     if (!provider || typeof provider.get !== "function") return null;
-
-    try {
-      return (await provider.get(item)) || null;
-    } catch {
-      return null;
-    }
+    return (await provider.get(item)) || null;
   }
 
   static preloadPaperMetadataInBackground(items = [], options = {}) {
     const provider = CatalogItem.getPaperMetadataProvider();
     if (!provider || typeof provider.preload !== "function") return;
-
-    try {
-      provider.preload(items, options);
-    } catch {
-      // Optional module failures should never break core UI flow.
-    }
+    provider.preload(items, options);
   }
 
   static ensureDetailModal() {
@@ -409,8 +454,7 @@ class CatalogItem {
           </div>
           <div class="modal-body">
             <div class="row g-3">
-              <div class="col-12 col-md-5">
-                <img class="img-fluid rounded border w-100" data-modal-image src="${DEFAULT_PLACEHOLDER_IMG}" alt="Item cover">
+              <div class="col-12 col-md-5" data-modal-media>
               </div>
               <div class="col-12 col-md-7">
                 <dl class="row mb-0" data-modal-fields></dl>
@@ -418,8 +462,6 @@ class CatalogItem {
             </div>
             <hr>
             <p class="h6">Raw parsed data</p>
-<!--            <pre class="small border rounded p-2 mb-0" data-modal-raw></pre>-->
-<!--            <pre class="small border rounded p-2 mb-0"><code  data-modal-raw></code></pre>-->
             <pre class="small border rounded p-2 mb-0"><code  data-modal-raw></code></pre>
           </div>
           <div class="modal-footer">
@@ -434,31 +476,50 @@ class CatalogItem {
   }
 
   static setModalImage(modal, item, imageSrc) {
-    const modalImage = modal?.querySelector("[data-modal-image]");
-    if (!modalImage) return;
+    const mediaHost = modal?.querySelector("[data-modal-media]");
+    if (!mediaHost) return;
 
-    const title = uiSafeText(item?.title, "Untitled");
-    const typeText = uiSafeText(item?.type, "Unknown");
-    modalImage.src = imageSrc || DEFAULT_PLACEHOLDER_IMG;
-    modalImage.alt = `${title} ${typeText} cover`;
+    const title = item?.title || "Untitled";
+    const typeText = item?.type || "Unknown";
+    const altText = `${title} ${typeText} cover`;
+    const source = imageSrc || getDefaultPlaceholderImg();
+
+    if (isPlaceholderImageSource(source)) {
+      const placeholder = createInlinePlaceholderElement(
+        "img-fluid rounded border w-100",
+        altText,
+      );
+
+      if (placeholder) {
+        mediaHost.innerHTML = "";
+        mediaHost.appendChild(placeholder);
+        return;
+      }
+    }
+
+    const modalImage = document.createElement("img");
+    modalImage.className = "img-fluid rounded border w-100";
+    modalImage.src = source;
+    modalImage.alt = altText;
     modalImage.onerror = () => {
-      modalImage.src = DEFAULT_PLACEHOLDER_IMG;
+      if (isPlaceholderImageSource(source)) return;
+      CatalogItem.setModalImage(modal, item, getDefaultPlaceholderImg());
     };
+
+    mediaHost.innerHTML = "";
+    mediaHost.appendChild(modalImage);
   }
 
   static renderModalFields(modal, item) {
     const modalFields = modal?.querySelector("[data-modal-fields]");
     if (!modalFields) return;
 
-    const typeText = uiSafeText(item?.type, "Unknown");
-    const author = uiSafeText(item?.author, "Unknown");
+    const typeText = item?.type || "Unknown";
+    const author = item?.author || "Unknown";
     const year = uiIsValidYear(item?.year) ? String(item.year) : "Unknown";
-    const genre = uiSafeText(item?.genre, "Unknown");
+    const genre = item?.genre || "Unknown";
     const rating = uiSafeRating(item?.rating);
-    const description = uiSafeText(
-      item?.description,
-      "No description provided.",
-    );
+    const description = item?.description || "No description provided.";
 
     const rows = [
       { label: "Type", value: typeText },
@@ -516,20 +577,20 @@ class CatalogItem {
     if (!modalRaw) return;
 
     const rawData = {
-      title: uiSafeText(item?.title, ""),
-      type: uiSafeText(item?.type, ""),
-      author: uiSafeText(item?.author, ""),
+      title: item?.title ?? "",
+      type: item?.type ?? "",
+      author: item?.author ?? "",
       year: Number.isFinite(Number(item?.year))
         ? Number(item.year)
         : item?.year,
-      genre: uiSafeText(item?.genre, ""),
+      genre: item?.genre,
       rating:
         item?.rating === undefined || item?.rating === null
           ? null
           : Number.isFinite(Number(item?.rating))
             ? Number(item.rating)
             : item.rating,
-      description: uiSafeText(item?.description, ""),
+      description: item?.description ?? "",
     };
 
     if (uiNormalizeType(item?.type) === "paper") {
@@ -540,9 +601,6 @@ class CatalogItem {
       rawData.paperMetaSource = metadata?.source || null;
     }
     const json = JSON.stringify(rawData, null, 2);
-
-    // modalRaw.textContent = JSON.stringify(rawData, null, 2);
-    // modalRaw.textContent = highlightJSON(json);
     modalRaw.innerHTML = highlightJSON(json);
   }
 
@@ -554,7 +612,7 @@ class CatalogItem {
       `#${CatalogItem.DETAIL_MODAL_ID}Label`,
     );
     if (modalTitle) {
-      modalTitle.textContent = uiSafeText(item?.title, "Untitled");
+      modalTitle.textContent = item?.title || "Untitled";
     }
 
     CatalogItem.setModalImage(modal, item, imageSrc);
@@ -573,7 +631,7 @@ class CatalogItem {
     CatalogItem.setModalImage(
       modal,
       item,
-      imageSrc || DEFAULT_PLACEHOLDER_IMG,
+      imageSrc || getDefaultPlaceholderImg(),
     );
   }
 
@@ -585,8 +643,11 @@ class CatalogItem {
     CatalogItem.renderModalRaw(modal, item);
   }
 
-  // Useful methods may include (but not limited to):
-  matchesFilter({ type, genre }) {} // returns Boolean based on filter criteria
+  matchesFilter({ type = "all" } = {}) {
+    const selectedType = uiNormalizeType(type);
+    if (!selectedType || selectedType === "all") return true;
+    return uiNormalizeType(this.type) === selectedType;
+  }
 
   async toCard() {
     return await this.createCardElement();
@@ -603,11 +664,11 @@ class CatalogItem {
     body.className = "card-body p-2";
 
     const rating = uiSafeRating(this.rating);
-    const typeText = uiSafeText(this.type, "item");
+    const typeText = this.type || "item";
     const subtitle = this.getSubtitle();
 
     body.innerHTML = `
-      <h6 class="card-title mb-1">${uiEscapeHtml(uiSafeText(this.title, "Untitled"))}</h6>
+      <h6 class="card-title mb-1">${uiEscapeHtml(this.title || "Untitled")}</h6>
       <p class="card-subtitle small mb-2">${uiEscapeHtml(subtitle)}</p>
       <div class="d-flex flex-wrap align-items-center gap-1">
         <span class="badge bg-secondary text-uppercase">${uiEscapeHtml(typeText)}</span>
@@ -624,7 +685,7 @@ class CatalogItem {
       "catalog-card-trigger btn p-0 border-0 bg-transparent text-start w-100 h-100";
     trigger.setAttribute(
       "aria-label",
-      `Open details for ${uiSafeText(this.title, "Untitled")}`,
+      `Open details for ${this.title || "Untitled"}`,
     );
 
     trigger.addEventListener("click", async () => {
@@ -634,7 +695,7 @@ class CatalogItem {
       if (readyImage) {
         CatalogItem.openModal(this, readyImage);
       } else {
-        CatalogItem.openModal(this, DEFAULT_PLACEHOLDER_IMG);
+        CatalogItem.openModal(this, getDefaultPlaceholderImg());
         try {
           const imageSrc = await CatalogItem.getPreloadedCover(this);
           CatalogItem.updateModalImageIfCurrent(this, imageSrc);
@@ -659,16 +720,6 @@ class CatalogItem {
     return col;
   }
 }
-
-// const testCatalogItem = new CatalogItem(
-//   "hello",
-//   undefined,
-//   undefined,
-//   undefined,
-// );
-// console.log("console message test");
-// console.log(testCatalogItem);
-// console.log(testCatalogItem.toLocalString());
 
 function footer() {
   const lastUpdate = new Date(2026, 1, 20);

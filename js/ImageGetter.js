@@ -3,27 +3,8 @@
 const COVER_CACHE_KEY = "bookCoverCache";
 const WIKIPEDIA_REST_SUMMARY_URL =
   "https://en.wikipedia.org/api/rest_v1/page/summary";
-const DEFAULT_PLACEHOLDER_SRC =
-  "assets/placeholder_viewboxed_600x900_combo.svg";
+const DEFAULT_PLACEHOLDER_SRC = "assets/placeholder_viewboxed_600x900.svg";
 const CROSSREF_WORKS_URL = "https://api.crossref.org/works";
-
-const TYPE_PLACEHOLDER_TEXT = {
-  book: "Book",
-  movie: "Movie",
-  game: "Game",
-  music: "Music",
-  paper: "Paper",
-  unknown: "Item",
-};
-
-const TYPE_PLACEHOLDER_ICON = {
-  book: "📘",
-  movie: "🎬",
-  game: "🎮",
-  music: "🎵",
-  paper: "📄",
-  unknown: "📦",
-};
 
 const paperMetadataMap = new Map();
 const paperMetadataPendingMap = new Map();
@@ -73,37 +54,6 @@ function getImageItemKey(item) {
 function isValidYear(year) {
   const n = Number(year);
   return Number.isFinite(n) && n > 1000 && n < 3000;
-}
-
-function escapeHtml(text) {
-  return String(text || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function getTypePlaceholder(type) {
-  const normalized = normalizeType(type);
-  const label =
-    TYPE_PLACEHOLDER_TEXT[normalized] || TYPE_PLACEHOLDER_TEXT.unknown;
-  const icon =
-    TYPE_PLACEHOLDER_ICON[normalized] || TYPE_PLACEHOLDER_ICON.unknown;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200" viewBox="0 0 800 1200"><rect width="100%" height="100%" fill="#f4f6f8"/><rect x="40" y="40" width="720" height="1120" rx="24" fill="#ffffff" stroke="#d0d7de"/><text x="400" y="530" text-anchor="middle" font-size="120">${icon}</text><text x="400" y="640" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" fill="#57606a">${escapeHtml(label)}</text></svg>`;
-
-  try {
-    const bytes = new TextEncoder().encode(svg);
-    let binary = "";
-    const chunkSize = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, i + chunkSize);
-      binary += String.fromCharCode(...chunk);
-    }
-    return `data:image/svg+xml;base64,${btoa(binary)}`;
-  } catch {
-    return DEFAULT_PLACEHOLDER_SRC;
-  }
 }
 
 async function fetchJson(url) {
@@ -632,16 +582,34 @@ async function getMusicCover(item) {
 }
 
 async function getPaperCover(item) {
-  // Best-effort approach: Crossref can provide DOI/links and occasionally image links.
-  // We keep this uncached in localStorage so papers aren't permanently stuck at null.
-  const metadata = await getPaperMetadata(item);
-  return metadata?.imageUrl || null;
+  const cacheKey = `paper|${item.title}|${item.author}|${item.year}`;
+
+  if (coverCache.has(cacheKey)) {
+    return coverCache.get(cacheKey);
+  }
+
+  try {
+    const metadata = await getPaperMetadata(item);
+    const imageUrl = metadata?.imageUrl || null;
+
+    // Cache only successful hits so temporary misses can recover later.
+    if (imageUrl) {
+      coverCache.set(cacheKey, imageUrl);
+      persistCoverCache();
+    }
+
+    return imageUrl;
+  } catch {
+    return null;
+  }
 }
 
 async function getFallbackCoverForType(item) {
-  const type = normalizeType(item?.type);
-  if (!type) return DEFAULT_PLACEHOLDER_SRC;
-  return getTypePlaceholder(type);
+  if (typeof getPlaceholderSrc === "function") {
+    return getPlaceholderSrc();
+  }
+
+  return DEFAULT_PLACEHOLDER_SRC;
 }
 
 function clearLocalStorage() {

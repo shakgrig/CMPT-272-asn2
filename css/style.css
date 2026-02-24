@@ -9,14 +9,20 @@
   --light-accent-color: #765fd9;
   --light-accent-color-hover: hsl(from var(--light-accent-color) h s calc(l * 0.8));
   /*--light-text-color: #4d4d4d;*/
-  --light-text-color: rgba(33, 37, 41, 0.75); /* copied from bootstrap --bs-secondary-bg as it was nicer */
+  --light-text-color: rgba(33, 37, 41, 0.75);
+  /* copied from bootstrap --bs-secondary-bg as it was nicer */
   --light-light-bg: #f7f5fd;
   --light-primary-bg-color: #f0f0f0;
-   --light-separator-color: #dedede;
+  --light-separator-color: #dedede;
   --light-json-key: royalblue;
   --light-json-string: firebrick;
   --light-json-number: seagreen;
   --light-json-boolean: slateblue;
+  --light-placeholder-bg: #EAEAEA;
+  --light-placeholder-outer: #FAFAFA;
+  --light-placeholder-inner: #fff;
+  --light-placeholder-icon: #666;
+  --light-placeholder-stroke: #C9C9C9;
 
   /* Dark palette */
   --dark-header-color: color-mix(in srgb,
@@ -31,16 +37,22 @@
   --dark-accent-color: var(--light-accent-color);
   --dark-accent-color-hover: var(--light-accent-color-hover);
   /*--dark-text-color: #e0e0e0;*/
-  --dark-text-color: rgba(222, 226, 230, 0.75); /* copied from bootstrap --bs-secondary-bg as it was nicer */
+  --dark-text-color: rgba(222, 226, 230, 0.75);
+  /* copied from bootstrap --bs-secondary-bg as it was nicer */
   --dark-light-bg: color-mix(in srgb,
       var(--light-light-bg) 10%,
       var(--dark-primary-bg-color) 90%);
   --dark-primary-bg-color: var(--light-primary-color);
-   --dark-separator-color: #505050;
+  --dark-separator-color: #505050;
   --dark-json-key: lightskyblue;
   --dark-json-string: darksalmon;
   --dark-json-number: lemonchiffon;
   --dark-json-boolean: steelblue;
+  --dark-placeholder-bg: #1E1E1E;
+  --dark-placeholder-outer: #2A2A2A;
+  --dark-placeholder-inner: #3A3A3A;
+  --dark-placeholder-icon: #B0B0B0;
+  --dark-placeholder-stroke: #4A4A4A;
 }
 
 /* Default and Force Light */
@@ -61,6 +73,11 @@
   --json-string: var(--light-json-string);
   --json-number: var(--light-json-number);
   --json-boolean: var(--light-json-boolean);
+  --placeholder-bg: var(--light-placeholder-bg);
+  --placeholder-outer: var(--light-placeholder-outer);
+  --placeholder-inner: var(--light-placeholder-inner);
+  --placeholder-icon: var(--light-placeholder-icon);
+  --placeholder-stroke: var(--light-placeholder-stroke);
 }
 
 /* Force Dark */
@@ -80,6 +97,11 @@
   --json-string: var(--dark-json-string);
   --json-number: var(--dark-json-number);
   --json-boolean: var(--dark-json-boolean);
+  --placeholder-bg: var(--dark-placeholder-bg);
+  --placeholder-outer: var(--dark-placeholder-outer);
+  --placeholder-inner: var(--dark-placeholder-inner);
+  --placeholder-icon: var(--dark-placeholder-icon);
+  --placeholder-stroke: var(--dark-placeholder-stroke);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -99,6 +121,11 @@
     --json-string: var(--dark-json-string);
     --json-number: var(--dark-json-number);
     --json-boolean: var(--dark-json-boolean);
+    --placeholder-bg: var(--dark-placeholder-bg);
+    --placeholder-outer: var(--dark-placeholder-outer);
+    --placeholder-inner: var(--dark-placeholder-inner);
+    --placeholder-icon: var(--dark-placeholder-icon);
+    --placeholder-stroke: var(--dark-placeholder-stroke);
   }
 }
 
@@ -452,6 +479,7 @@ body,
 .site-footer,
 /*.footer-section ul li a:hover,*/
 .theme-button
+
 /*.social-link svg*/
   {
   color: white;
@@ -516,6 +544,6 @@ fieldset legend,
 }
 
 body,
-.site-footer{
+.site-footer {
   background-color: var(--primary-bg-color);
 }
