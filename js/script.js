@@ -8,8 +8,21 @@ const sortSelect = document.getElementById("sortSelect");
 const resultsContainer = document.getElementById("results");
 const tempHeader = document.querySelector(".temp-header");
 const tempSubHeader = document.querySelector(".temp-sub-header");
+const themeMenuButton = document.getElementById("themeMenuButton");
+const themeButtonIcon = themeMenuButton?.querySelector(".theme-icon");
+const themeButtonLabel = themeMenuButton?.querySelector(".theme-button-label");
+const themeButtonSr = themeMenuButton?.querySelector(".theme-button-sr");
+const themeOptionInputs = Array.from(
+  document.querySelectorAll('input[name="theme"]'),
+);
 const DEFAULT_PLACEHOLDER_IMG = "assets/placeholder_viewboxed_600x900.svg";
 let loadedCatalogItems = [];
+
+const THEME_DISPLAY = {
+  "theme-light": { icon: "\u2600", label: "Light" },
+  "theme-dark": { icon: "\u263D", label: "Dark" },
+  "theme-system": { icon: "\u{1F5B3}", label: "System" },
+};
 
 function getDefaultPlaceholderImg() {
   if (typeof getPlaceholderSrc === "function") {
@@ -42,6 +55,7 @@ function createInlinePlaceholderElement(
 
 function init() {
   footer();
+  initThemeController();
 
   typeSelect?.addEventListener("change", applyFiltersAndSort);
   sortSelect?.addEventListener("change", applyFiltersAndSort);
@@ -109,6 +123,46 @@ function init() {
     };
     reader.readAsText(file);
   });
+}
+
+function initThemeController() {
+  if (!themeOptionInputs.length || !themeMenuButton) return;
+
+  themeOptionInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      if (!input.checked) return;
+      syncThemeButtonState();
+      closeThemeDropdown();
+    });
+  });
+
+  syncThemeButtonState();
+}
+
+function closeThemeDropdown() {
+  if (!themeMenuButton || !window.bootstrap?.Dropdown) return;
+
+  const dropdown =
+    window.bootstrap.Dropdown.getOrCreateInstance(themeMenuButton);
+  dropdown.hide();
+}
+
+function syncThemeButtonState() {
+  if (!themeMenuButton) return;
+
+  const selectedInput =
+    themeOptionInputs.find((input) => input.checked) ||
+    document.getElementById("theme-system");
+  const key = selectedInput?.id || "theme-system";
+  const display = THEME_DISPLAY[key] || THEME_DISPLAY["theme-system"];
+
+  if (themeButtonIcon) themeButtonIcon.textContent = display.icon;
+  if (themeButtonLabel) themeButtonLabel.textContent = display.label;
+  if (themeButtonSr) {
+    themeButtonSr.textContent = `Theme menu, current: ${display.label}`;
+  }
+
+  themeMenuButton.title = `Theme: ${display.label}`;
 }
 
 const toastContainer = document.getElementById("liveToastContainer");

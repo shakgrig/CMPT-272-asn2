@@ -1,19 +1,22 @@
-/* Theme Variables */
+/*
+ * Theme Variables 
+ */
 :root {
-  /* Light palette */
+  /*
+   * Light palette
+   */
   --light-header-color: #1c8029;
   --light-button-color: #29a646;
   --light-button-color-hover: hsl(
     from var(--light-button-color) h s calc(l * 0.8)
   );
   --light-primary-color: #212121;
-  --light-footer-color: #222;
   --light-accent-color: #765fd9;
   --light-accent-color-hover: hsl(
     from var(--light-accent-color) h s calc(l * 0.8)
   );
-  /*--light-text-color: #4d4d4d;*/
-  --light-text-color: rgba(33 37 41 / 0.75); /* copied from bootstrap --bs-secondary-bg as it was nicer */
+  /*--light-text-color: #4d4d4d;*//* replaced by --bs-secondary-bg from bootstrap as it was nicer */
+  --light-text-color: rgba(33 37 41 / 0.75);
   --light-light-bg: #f7f5fd;
   --light-primary-bg-color: #f0f0f0;
   --light-separator-color: #dedede;
@@ -27,7 +30,9 @@
   --light-placeholder-icon: #666;
   --light-placeholder-stroke: #c9c9c9;
 
-  /* Dark palette */
+  /*
+   * Dark palette
+   */
   --dark-header-color: color-mix(
     in srgb,
     var(--light-header-color) 60%,
@@ -42,11 +47,10 @@
     from var(--dark-button-color) h s calc(l * 0.8)
   );
   --dark-primary-color: var(--light-primary-bg-color);
-  --dark-footer-color: hsl(from var(--light-footer-color) h s calc(l * 0.85));
   --dark-accent-color: var(--light-accent-color);
   --dark-accent-color-hover: var(--light-accent-color-hover);
-  /*--dark-text-color: #e0e0e0;*/
-  --dark-text-color: rgba(222 226 230 / 0.75); /* copied from bootstrap --bs-secondary-bg as it was nicer */
+  /*--dark-text-color: #e0e0e0;*//* replaced by --bs-secondary-bg from bootstrap as it was nicer */
+  --dark-text-color: rgba(222 226 230 / 0.75); 
   --dark-light-bg: color-mix(
     in srgb,
     var(--light-light-bg) 10%,
@@ -65,14 +69,15 @@
   --dark-placeholder-stroke: #4a4a4a;
 }
 
-/* Default and Force Light */
+/*
+ * Default and Force Light
+ */
 :root,
 :root:has(#theme-light:checked) {
   --header-color: var(--light-header-color);
   --button-color: var(--light-button-color);
   --button-color-hover: var(--light-button-color-hover);
   --primary-color: var(--light-primary-color);
-  --footer-color: var(--light-footer-color);
   --accent-color: var(--light-accent-color);
   --accent-color-hover: var(--light-accent-color-hover);
   --text-color: var(--light-text-color);
@@ -90,13 +95,14 @@
   --placeholder-stroke: var(--light-placeholder-stroke);
 }
 
-/* Force Dark */
+/*
+ * Force Dark 
+ */
 :root:has(#theme-dark:checked) {
   --header-color: var(--dark-header-color);
   --button-color: var(--dark-button-color);
   --button-color-hover: var(--dark-button-color-hover);
   --primary-color: var(--dark-primary-color);
-  --footer-color: var(--dark-footer-color);
   --accent-color: var(--dark-accent-color);
   --accent-color-hover: var(--dark-accent-color-hover);
   --text-color: var(--dark-text-color);
@@ -120,7 +126,6 @@
     --button-color: var(--dark-button-color);
     --button-color-hover: var(--dark-button-color-hover);
     --primary-color: var(--dark-primary-color);
-    --footer-color: var(--dark-footer-color);
     --accent-color: var(--dark-accent-color);
     --accent-color-hover: var(--dark-accent-color-hover);
     --text-color: var(--dark-text-color);
@@ -139,7 +144,140 @@
   }
 }
 
-/* Base / Reset */
+/* fix bootstrap border color vars problem */
+:root {
+  --bs-border-color: var(--separator-color);
+  --bs-border-color-translucent: color-mix(
+    in srgb,
+    var(--separator-color) 60%,
+    transparent
+  );
+  --bs-modal-border-color: var(--separator-color);
+}
+
+/*
+ * Theme Mappings 
+ */
+body,
+.product-title,
+.product-name,
+.product-gallery,
+.card-header,
+.card-title,
+.form-label,
+.modal-value,
+.modal-body .h6,
+.modal-body pre,
+.modal-title,
+.theme-selector .form-check-label,
+.app-toast {
+  color: var(--primary-color);
+}
+
+body,
+.site-footer {
+  background-color: var(--primary-bg-color);
+}
+
+.site-header,
+.logo .h1 a,
+.site-footer,
+.theme-button {
+  color: white;
+}
+
+.product-card,
+.gallery-card,
+.card,
+.modal-content,
+.theme-selector,
+.app-toast {
+  background-color: var(--light-bg);
+}
+
+fieldset legend,
+.card-body,
+.temp-sub-header,
+.card-subtitle,
+.card-details,
+.modal-label,
+.footer-bottom,
+.footer-copyright {
+  color: var(--text-color);
+}
+
+a,
+.product-name:hover {
+  color: var(--accent-color);
+}
+
+.site-header {
+  background-color: var(--header-color);
+}
+
+.rating-badge,
+.theme-selector .form-check-input:checked  {
+  background-color: var(--accent-color);
+}
+
+.theme-selector .form-check-label:hover {
+  background-color: rgba(255 255 255 / 0.1);
+}
+
+.theme-button {
+  background-color: var(--button-color);
+}
+
+.json-key {
+  color: var(--json-key);
+}
+
+.json-string {
+  color: var(--json-string);
+}
+
+.json-number {
+  color: var(--json-number);
+}
+
+.json-boolean {
+  color: var(--json-boolean);
+}
+
+.modal-header,
+.modal-body,
+.modal-footer pre,
+.modal-content,
+.footer-bottom,
+.theme-selector,
+.theme-selector .form-check-input,
+.app-toast {
+  border-color: var(--separator-color) !important;
+}
+
+.modal-body hr {
+  color: grey;
+}
+
+.app-toast-success {
+  border-color: var(--bs-success-border-subtle);
+}
+
+.app-toast-danger {
+  border-color: var(--bs-danger-border-subtle);
+}
+
+.app-toast-warning {
+  border-color: var(--bs-warning-border-subtle);
+}
+
+.app-toast-info {
+  border-color: var(--bs-info-border-subtle);
+}
+
+/*
+ * Base / Reset
+ */
 * {
   box-sizing: border-box;
 }
@@ -160,7 +298,6 @@ a:hover {
 }
 
 .site-header {
-  background-color: var(--header-color);
   padding: 0;
   position: relative;
   z-index: 20;
@@ -196,7 +333,6 @@ a:hover {
 }
 
 .site-footer {
-  /*background-color: var(--footer-color);*/
   padding: 40px 20px 20px;
   margin-top: 60px;
 }
@@ -213,32 +349,16 @@ a:hover {
 }
 
 .app-toast {
-  background-color: var(--light-bg);
-  color: var(--primary-color);
-  border: 1px solid var(--separator-color);
-  border-left: 0.35rem solid var(--separator-color);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.28);
+  border: 1px solid;
+  border-left: 0.35rem solid;
+  box-shadow: 0 0.5rem 1rem rgba(0 0 0 / 0.28);
 }
 
 .app-toast .toast-body {
   font-weight: 600;
 }
 
-.app-toast-success {
-  border-color: var(--bs-success-border-subtle);
-}
 
-.app-toast-danger {
-  border-color: var(--bs-danger-border-subtle);
-}
-
-.app-toast-warning {
-  border-color: var(--bs-warning-border-subtle);
-}
-
-.app-toast-info {
-  border-color: var(--bs-info-border-subtle);
-}
 
 .footer-bottom {
   max-width: 1600px;
@@ -260,7 +380,9 @@ a:hover {
   font-weight: 600;
 }
 
-/* Responsive */
+/*
+ * Responsive
+ */
 @media (max-width: 768px) {
   .header-content {
     display: flex;
@@ -283,130 +405,139 @@ a:hover {
   }
 
   .site-header .theme-menu {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 56px;
-    height: 100%;
+    top: 50%;
+    right: 12px;
     z-index: 60;
   }
 
   .site-header .theme-menu .theme-selector {
-    background: var(--button-color);
-    pointer-events: auto;
+    width: min(14rem, calc(100vw - 1.5rem));
   }
 }
 
-/* Theme Controller */
+/*
+ * Theme Controller 
+ */
 .theme-menu {
   position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 60px;
-  transition: width 0.3s ease;
-  overflow: hidden;
-  border: none;
-}
-
-.theme-menu:hover {
-  width: 400px;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  z-index: 60;
 }
 
 .theme-button {
-  border: none;
-  padding: 12px 15px 12px 20px;
-  font-size: 30px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1;
+  border-width: 1px;
+  border-style: solid;
+  border-color: color-mix(in srgb, white 35%, transparent);
+}
+
+.theme-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.theme-button-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .theme-selector {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0 10px;
-  gap: 4px;
-  height: 100%;
-  border: 0;
-  margin: 0;
-  min-inline-size: 0;
+  min-width: 12rem;
 }
 
-.theme-selector label {
-  padding: 10px;
+.theme-selector .form-check-label {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 16px;
+  gap: 0.4rem;
+}
+
+.theme-selector .form-check-input {
+  cursor: pointer;
+}
+
+.catalog-card-trigger {
+  cursor: pointer;
+  display: block;
+  transform: none;
+  transition: none;
+}
+
+.catalog-item-card--compact {
+  min-height: 12rem;
+}
+
+.catalog-card-trigger .catalog-item-card {
+  transform: translateY(0);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.catalog-card-trigger:is(:hover, :focus-visible) .catalog-item-card {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0 0 0 / 0.15);
+}
+
+.catalog-item-card--compact .card-body {
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
-/* Theme Mappings */
-body,
-.product-title,
-.product-name,
-.product-gallery,
-.card-header,
-.card-title,
-.form-label,
-.modal-value,
-.modal-body .h6,
-.modal-body pre,
-.modal-title {
-  color: var(--primary-color);
+.catalog-item-card--compact .card-title {
+  margin: 0 0 0.25rem;
+  line-height: 1.25;
+  min-height: 2.5em;
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
-.site-header,
-.logo .h1 a,
-.site-footer,
-.theme-button {
-  color: white;
+.catalog-item-card--compact .card-subtitle {
+  margin: 0 0 0.5rem;
+  line-height: 1.3;
+  min-height: 2.6em;
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
-.product-card,
-.gallery-card,
-.card,
-.modal-content {
-  background-color: var(--light-bg);
+.catalog-item-card--compact .card-body > .d-flex {
+  margin-top: auto;
 }
 
-.theme-menu,
-.theme-selector,
-.theme-button {
-  background-color: var(--button-color);
+.catalog-item-card--compact .badge {
+  line-height: 1;
 }
 
-a,
-.product-name:hover {
-  color: var(--accent-color);
+.catalog-card-trigger:focus-visible {
+  outline: 3px solid var(--accent-color);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
 }
 
-.rating-badge {
-  background-color: var(--accent-color);
+.generated-cards {
+  margin: 40px 0;
 }
 
-fieldset legend,
-.card-body,
-.temp-sub-header,
-.card-subtitle,
-.card-details,
-.modal-label,
-.footer-bottom,
-.footer-copyright {
-  color: var(--text-color);
+.generated-cards > p {
+  text-align: center;
 }
 
-.theme-selector label:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  text-decoration: none;
-}
-
-body,
-.site-footer {
-  background-color: var(--primary-bg-color);
+@media (prefers-reduced-motion: reduce) {
+  .catalog-card-trigger .catalog-item-card {
+    transition: none;
+  }
 }

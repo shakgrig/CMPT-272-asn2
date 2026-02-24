@@ -11,6 +11,7 @@
     from var(--light-accent-color) h s calc(l * 0.8)
   );
   --light-price-color: #e74c3c;
+  --light-footer-color: #222;
 
   /*Dark palette */
   --dark-button-color: color-mix(
@@ -26,22 +27,26 @@
     var(--light-price-color) 70%,
     var(--dark-primary-bg-color) 30%
   );
+  --dark-footer-color: hsl(from var(--light-footer-color) h s calc(l * 0.85));
 }
 
 /*Default and Force Light */
 :root,
 :root:has(#theme-light:checked) {
   --price-color: var(--light-price-color);
+  --footer-color: var(--light-footer-color);
 }
 
 /*Force Dark */
 :root:has(#theme-dark:checked) {
   --price-color: var(--dark-price-color);
+  --footer-color: var(--dark-footer-color);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --price-color: var(--dark-price-color);
+    --footer-color: var(--dark-footer-color);
   }
 }
 
@@ -273,6 +278,10 @@
   font-weight: bold;
   margin: 10px 0;
   color: var(--price-color);
+}
+
+.site-footer {
+  background-color: var(--footer-color);
 }
 
 .product-rating {
