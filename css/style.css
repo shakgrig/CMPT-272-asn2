@@ -3,11 +3,15 @@
   /* Light palette */
   --light-header-color: #1c8029;
   --light-button-color: #29a646;
-  --light-button-color-hover: hsl(from var(--light-button-color) h s calc(l * 0.8));
+  --light-button-color-hover: hsl(
+    from var(--light-button-color) h s calc(l * 0.8)
+  );
   --light-primary-color: #212121;
   --light-footer-color: #222;
   --light-accent-color: #765fd9;
-  --light-accent-color-hover: hsl(from var(--light-accent-color) h s calc(l * 0.8));
+  --light-accent-color-hover: hsl(
+    from var(--light-accent-color) h s calc(l * 0.8)
+  );
   /*--light-text-color: #4d4d4d;*/
   --light-text-color: rgba(33, 37, 41, 0.75);
   /* copied from bootstrap --bs-secondary-bg as it was nicer */
@@ -18,20 +22,26 @@
   --light-json-string: firebrick;
   --light-json-number: seagreen;
   --light-json-boolean: slateblue;
-  --light-placeholder-bg: #EAEAEA;
-  --light-placeholder-outer: #FAFAFA;
+  --light-placeholder-bg: #eaeaea;
+  --light-placeholder-outer: #fafafa;
   --light-placeholder-inner: #fff;
   --light-placeholder-icon: #666;
-  --light-placeholder-stroke: #C9C9C9;
+  --light-placeholder-stroke: #c9c9c9;
 
   /* Dark palette */
-  --dark-header-color: color-mix(in srgb,
-      var(--light-header-color) 60%,
-      var(--light-primary-color) 40%);
-  --dark-button-color: color-mix(in srgb,
-      var(--light-button-color) 70%,
-      var(--light-primary-color) 30%);
-  --dark-button-color-hover: hsl(from var(--dark-button-color) h s calc(l * 0.8));
+  --dark-header-color: color-mix(
+    in srgb,
+    var(--light-header-color) 60%,
+    var(--light-primary-color) 40%
+  );
+  --dark-button-color: color-mix(
+    in srgb,
+    var(--light-button-color) 70%,
+    var(--light-primary-color) 30%
+  );
+  --dark-button-color-hover: hsl(
+    from var(--dark-button-color) h s calc(l * 0.8)
+  );
   --dark-primary-color: var(--light-primary-bg-color);
   --dark-footer-color: hsl(from var(--light-footer-color) h s calc(l * 0.85));
   --dark-accent-color: var(--light-accent-color);
@@ -39,20 +49,22 @@
   /*--dark-text-color: #e0e0e0;*/
   --dark-text-color: rgba(222, 226, 230, 0.75);
   /* copied from bootstrap --bs-secondary-bg as it was nicer */
-  --dark-light-bg: color-mix(in srgb,
-      var(--light-light-bg) 10%,
-      var(--dark-primary-bg-color) 90%);
+  --dark-light-bg: color-mix(
+    in srgb,
+    var(--light-light-bg) 10%,
+    var(--dark-primary-bg-color) 90%
+  );
   --dark-primary-bg-color: var(--light-primary-color);
   --dark-separator-color: #505050;
   --dark-json-key: lightskyblue;
   --dark-json-string: darksalmon;
   --dark-json-number: lemonchiffon;
   --dark-json-boolean: steelblue;
-  --dark-placeholder-bg: #1E1E1E;
-  --dark-placeholder-outer: #2A2A2A;
-  --dark-placeholder-inner: #3A3A3A;
-  --dark-placeholder-icon: #B0B0B0;
-  --dark-placeholder-stroke: #4A4A4A;
+  --dark-placeholder-bg: #1e1e1e;
+  --dark-placeholder-outer: #2a2a2a;
+  --dark-placeholder-inner: #3a3a3a;
+  --dark-placeholder-icon: #b0b0b0;
+  --dark-placeholder-stroke: #4a4a4a;
 }
 
 /* Default and Force Light */
@@ -178,6 +190,11 @@ a:hover {
 
 .logo .h1 a:hover {
   text-decoration: underline;
+}
+
+.logo-mark {
+  font-size: 0.95em;
+  line-height: 1;
 }
 
 .header-icons {
@@ -310,6 +327,12 @@ a:hover {
   color: lightgray;
 }
 
+.footer-course {
+  display: block;
+  margin: 0;
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .header-content {
@@ -364,7 +387,7 @@ a:hover {
     padding: 0;
   }
 
-  .main-nav ul>li {
+  .main-nav ul > li {
     flex: 0 0 auto;
   }
 
@@ -480,8 +503,7 @@ body,
 /*.footer-section ul li a:hover,*/
 .theme-button
 
-/*.social-link svg*/
-  {
+/*.social-link svg*/ {
   color: white;
 }
 
@@ -520,7 +542,7 @@ fieldset legend,
 .card-body,
 .temp-sub-header,
 .card-subtitle,
-.details,
+.card-details,
 .modal-label,
 .footer-bottom,
 .footer-copyright {
