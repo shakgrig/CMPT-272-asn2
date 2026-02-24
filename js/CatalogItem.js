@@ -23,39 +23,6 @@ class CatalogItem {
     this.description = description;
   }
 
-  toLocalString() {
-    return `Title: ${this.title}\nType: ${this.type}\nAuthor: ${this.author}\nYear: ${this.year}\nGenre: ${this.genre}\nRating: ${this.rating}\nDescription: ${this.description}`;
-  }
-
-  getCacheKey() {
-    return [this.title, this.type, this.author, String(this.year ?? "")].join(
-      "|",
-    );
-  }
-
-  getSubtitle() {
-    const author = this.author;
-    const year = uiIsValidYear(this.year) ? String(this.year) : "";
-    if (author && year) return `${author} (${year})`;
-    if (author) return author;
-    if (year) return year;
-    return "Unknown";
-  }
-
-  async resolveCoverImage() {
-    if (typeof getCover === "function") {
-      const cover = await getCover(this);
-      if (cover) return cover;
-    }
-
-    if (typeof getFallbackCoverForType === "function") {
-      const fallback = await getFallbackCoverForType(this);
-      if (fallback) return fallback;
-    }
-
-    return getDefaultPlaceholderImg();
-  }
-
   static preloadImageToBrowserCache(imageSrc) {
     return new Promise((resolve) => {
       if (!imageSrc) {
@@ -388,6 +355,40 @@ class CatalogItem {
     CatalogItem.renderModalRaw(modal, item);
   }
 
+  // this was mostly just for testing and debugging
+  toLocalString() {
+    return `Title: ${this.title}\nType: ${this.type}\nAuthor: ${this.author}\nYear: ${this.year}\nGenre: ${this.genre}\nRating: ${this.rating}\nDescription: ${this.description}`;
+  }
+
+  getCacheKey() {
+    return [this.title, this.type, this.author, String(this.year ?? "")].join(
+      "|",
+    );
+  }
+
+  getSubtitle() {
+    const author = this.author;
+    const year = uiIsValidYear(this.year) ? String(this.year) : "";
+    if (author && year) return `${author} (${year})`;
+    if (author) return author;
+    if (year) return year;
+    return "Unknown";
+  }
+
+  async resolveCoverImage() {
+    if (typeof getCover === "function") {
+      const cover = await getCover(this);
+      if (cover) return cover;
+    }
+
+    if (typeof getFallbackCoverForType === "function") {
+      const fallback = await getFallbackCoverForType(this);
+      if (fallback) return fallback;
+    }
+
+    return getDefaultPlaceholderImg();
+  }
+
   matchesFilter({ type = "all" } = {}) {
     const selectedType = uiNormalizeType(type);
     if (!selectedType || selectedType === "all") return true;
@@ -418,8 +419,8 @@ class CatalogItem {
             <p class="card-subtitle small mb-1">${uiEscapeHtml(subtitle)}</p>
             <div class="d-flex flex-wrap align-items-center gap-1">
                 <span class="badge bg-secondary text-uppercase">${uiEscapeHtml(typeText)}</span>
-          <span class="badge bg-secondary border">Genre: ${uiEscapeHtml(genreText)}</span>
-                ${rating !== null ? `<span class="rating-badge badge">${uiEscapeHtml(rating)} ★</span>` : ""}
+                <span class="badge bg-secondary border">Genre: ${uiEscapeHtml(genreText)}</span>
+                ${rating !== null ? `<span class="rating-badge badge">${uiEscapeHtml(rating)} &starf;</span>` : ""}
                 <span class="card-details small ms-auto">Click for details</span>
             </div>
         `;

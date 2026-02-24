@@ -118,6 +118,7 @@ function init() {
 }
 
 const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+
 /** @type {(message: string, type: string) => void} */
 function appendAlert(message, type) {
   const wrapper = document.createElement("div");
