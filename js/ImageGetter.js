@@ -4,10 +4,6 @@ const COVER_CACHE_KEY = "bookCoverCache";
 const WIKIPEDIA_REST_SUMMARY_URL =
   "https://en.wikipedia.org/api/rest_v1/page/summary";
 const DEFAULT_PLACEHOLDER_SRC = "assets/placeholder_viewboxed_600x900.svg";
-const CROSSREF_WORKS_URL = "https://api.crossref.org/works";
-
-const paperMetadataMap = new Map();
-const paperMetadataPendingMap = new Map();
 
 // Load persisted cache into memory
 const coverCache = new Map();
@@ -40,15 +36,6 @@ function normalizeType(type) {
   return String(type || "")
     .trim()
     .toLowerCase();
-}
-
-function getImageItemKey(item) {
-  return [
-    String(item?.title || "").trim(),
-    String(item?.type || "").trim(),
-    String(item?.author || "").trim(),
-    String(item?.year ?? "").trim(),
-  ].join("|");
 }
 
 function isValidYear(year) {
@@ -209,279 +196,25 @@ function extractYearFromDate(dateValue) {
   return Number.isFinite(year) ? year : null;
 }
 
-function extractYearFromDateParts(dateParts) {
-  const year = Number(dateParts?.[0]?.[0]);
-  return Number.isFinite(year) ? year : null;
-}
-
-function getCrossrefWorkYear(work) {
-  return (
-    extractYearFromDateParts(work?.issued?.["date-parts"]) ||
-    extractYearFromDateParts(work?.["published-print"]?.["date-parts"]) ||
-    extractYearFromDateParts(work?.["published-online"]?.["date-parts"]) ||
-    extractYearFromDateParts(work?.created?.["date-parts"]) ||
-    null
-  );
-}
-
-function getCrossrefWorkTitle(work) {
-  if (Array.isArray(work?.title) && work.title.length > 0) {
-    return String(work.title[0] || "").trim();
-  }
-  return "";
-}
-
-function getCrossrefAuthorText(work) {
-  if (!Array.isArray(work?.author)) return "";
-  return work.author
-    .map((author) => {
-      const given = String(author?.given || "").trim();
-      const family = String(author?.family || "").trim();
-      const name = String(author?.name || "").trim();
-      return `${given} ${family}`.trim() || name;
-    })
-    .filter(Boolean)
-    .join(" ");
-}
-
-function isSpringerDoi(doi) {
-  const normalized = normalizeDoi(doi);
-  return /^10\.(1007|1186)\//i.test(normalized);
-}
-
-function scoreCrossrefWork(work, paper) {
-  const targetTitle = normalizeForMatch(paper?.title);
-  const targetAuthor = normalizeForMatch(paper?.author);
-  const targetYear = isValidYear(paper?.year) ? Number(paper.year) : null;
-
-  const workTitle = normalizeForMatch(getCrossrefWorkTitle(work));
-  const workAuthors = normalizeForMatch(getCrossrefAuthorText(work));
-  const workYear = getCrossrefWorkYear(work);
-
-  let score = 0;
-  if (targetTitle && workTitle === targetTitle) score += 6;
-  else if (targetTitle && workTitle.includes(targetTitle)) score += 3;
-
-  if (targetAuthor && workAuthors.includes(targetAuthor)) score += 3;
-  if (targetYear && workYear && targetYear === workYear) score += 2;
-
-  const doi = normalizeDoi(work?.DOI);
-  if (isSpringerDoi(doi)) score += 2;
-
-  const workType = String(work?.type || "").toLowerCase();
-  if (workType === "journal-article") score += 2;
-  if (workType === "posted-content") score -= 2;
-
-  // Common preprint DOI prefix; de-prioritize when a peer-reviewed item is available.
-  if (/^10\.21203\//i.test(doi)) score -= 2;
-
-  return score;
-}
-
-function isLikelyImageUrl(url) {
-  const value = String(url || "").toLowerCase();
-  return /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/.test(value);
-}
-
-function pickCrossrefImageUrl(work) {
-  const links = Array.isArray(work?.link) ? work.link : [];
-
-  const imageLink = links.find((link) =>
-    String(link?.["content-type"] || "")
-      .toLowerCase()
-      .startsWith("image/"),
-  );
-  if (imageLink?.URL) return String(imageLink.URL);
-
-  const likelyImageLink = links.find((link) => isLikelyImageUrl(link?.URL));
-  if (likelyImageLink?.URL) return String(likelyImageLink.URL);
-
-  return null;
-}
-
-function normalizeDoi(value) {
-  return String(value || "")
-    .trim()
-    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
-}
-
-function toDoiUrl(doi) {
-  const normalized = normalizeDoi(doi);
-  return normalized ? `https://doi.org/${normalized}` : null;
-}
-
-function toSafeHttpUrl(url) {
-  try {
-    const parsed = new URL(String(url || ""));
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
-      return parsed.href;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function extractSpringerJournalIdFromDoi(doi) {
-  const normalized = normalizeDoi(doi);
-  const match = normalized.match(/^10\.(1007|1186)\/s(\d{4,6})(?:[-/]|$)/i);
-  return match?.[2] || null;
-}
-
-function extractSpringerJournalIdFromUrl(url) {
-  const value = String(url || "").trim();
-  const match = value.match(/\/journal\/(\d{4,6})(?:[/?#]|$)/i);
-  return match?.[1] || null;
-}
-
-function buildSpringerJournalCoverCandidates(journalId) {
-  if (!journalId) return [];
-  return [
-    `https://media.springernature.com/full/springer-static/cover-hires/journal/${journalId}`,
-    `https://media.springernature.com/w158/springer-static/cover-hires/journal/${journalId}`,
-  ];
-}
-
-function canLoadImageUrl(imageSrc) {
-  return new Promise((resolve) => {
-    const safeUrl = toSafeHttpUrl(imageSrc);
-    if (!safeUrl) {
-      resolve(false);
-      return;
-    }
-
-    const img = new Image();
-    let settled = false;
-
-    const finish = (ok) => {
-      if (settled) return;
-      settled = true;
-      resolve(ok);
-    };
-
-    img.onload = () => finish(true);
-    img.onerror = () => finish(false);
-
-    const timeoutId = setTimeout(() => finish(false), 5000);
-    img.onload = () => {
-      clearTimeout(timeoutId);
-      finish(true);
-    };
-    img.onerror = () => {
-      clearTimeout(timeoutId);
-      finish(false);
-    };
-
-    img.src = safeUrl;
-  });
-}
-
-async function resolveSpringerJournalCoverUrl(doi, landingUrl) {
-  const journalId =
-    extractSpringerJournalIdFromDoi(doi) ||
-    extractSpringerJournalIdFromUrl(landingUrl);
-
-  if (!journalId) return null;
-
-  const candidates = buildSpringerJournalCoverCandidates(journalId);
-  for (const candidate of candidates) {
-    if (await canLoadImageUrl(candidate)) {
-      return candidate;
-    }
-  }
-
-  return null;
-}
-
-async function fetchPaperMetadataFromCrossref(paper) {
-  const title = String(paper?.title || "").trim();
-  const author = String(paper?.author || "").trim();
-  const year = isValidYear(paper?.year) ? String(paper.year) : "";
-
-  if (!title) return null;
-
-  const bibliographicQuery = [title, author, year].filter(Boolean).join(" ");
-
-  const params = new URLSearchParams({
-    "query.bibliographic": bibliographicQuery,
-    rows: "8",
-    select:
-      "DOI,URL,title,author,issued,published-print,published-online,created,link,type",
-  });
-
-  const data = await fetchJson(`${CROSSREF_WORKS_URL}?${params}`);
-  const items = Array.isArray(data?.message?.items) ? data.message.items : [];
-  if (!items.length) return null;
-
-  const best = items
-    .map((work) => ({ work, score: scoreCrossrefWork(work, paper) }))
-    .sort((a, b) => b.score - a.score)[0]?.work;
-
-  if (!best) return null;
-
-  const doi = normalizeDoi(best?.DOI);
-  const doiUrl = toSafeHttpUrl(toDoiUrl(doi));
-  const landingUrl = toSafeHttpUrl(best?.URL) || doiUrl || null;
-  let imageUrl = toSafeHttpUrl(pickCrossrefImageUrl(best));
-
-  if (!imageUrl) {
-    imageUrl = await resolveSpringerJournalCoverUrl(doi, landingUrl);
-
-    // If the top match is not Springer (e.g., a preprint), try a Springer candidate
-    // from the same result set before giving up.
-    if (!imageUrl) {
-      const springerFallback = items
-        .map((work) => ({ work, score: scoreCrossrefWork(work, paper) }))
-        .sort((a, b) => b.score - a.score)
-        .map((entry) => entry.work)
-        .find((work) => isSpringerDoi(work?.DOI));
-
-      if (springerFallback) {
-        imageUrl = await resolveSpringerJournalCoverUrl(
-          springerFallback?.DOI,
-          springerFallback?.URL,
-        );
-      }
-    }
-  }
-
-  if (!doi && !landingUrl && !imageUrl) return null;
-
-  return {
-    doi: doi || null,
-    doiUrl,
-    landingUrl,
-    imageUrl,
-    source: "crossref",
-  };
+function getPaperMetadataProvider() {
+  const provider =
+    typeof CATALOG_PAPER_METADATA_PROVIDER !== "undefined"
+      ? CATALOG_PAPER_METADATA_PROVIDER
+      : null;
+  if (!provider || typeof provider !== "object") return null;
+  if (typeof provider.get !== "function") return null;
+  return provider;
 }
 
 async function getPaperMetadata(paper) {
-  const key = getImageItemKey(paper);
+  const provider = getPaperMetadataProvider();
+  if (!provider) return null;
 
-  if (paperMetadataMap.has(key)) {
-    return paperMetadataMap.get(key);
+  try {
+    return (await provider.get(paper)) || null;
+  } catch {
+    return null;
   }
-
-  if (paperMetadataPendingMap.has(key)) {
-    return paperMetadataPendingMap.get(key);
-  }
-
-  const pending = (async () => {
-    try {
-      const metadata = await fetchPaperMetadataFromCrossref(paper);
-      paperMetadataMap.set(key, metadata || null);
-      return metadata || null;
-    } catch {
-      paperMetadataMap.set(key, null);
-      return null;
-    } finally {
-      paperMetadataPendingMap.delete(key);
-    }
-  })();
-
-  paperMetadataPendingMap.set(key, pending);
-  return pending;
 }
 
 function getArtistCreditText(entity) {

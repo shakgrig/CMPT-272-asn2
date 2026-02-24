@@ -218,6 +218,45 @@ a:hover {
   margin-top: 60px;
 }
 
+.app-toast-container {
+  z-index: 1100;
+  margin-top: 0.75rem;
+  width: min(92vw, 460px);
+  pointer-events: none;
+}
+
+.app-toast-container .toast {
+  pointer-events: auto;
+}
+
+.app-toast {
+  background-color: var(--light-bg);
+  color: var(--primary-color);
+  border: 1px solid var(--separator-color);
+  border-left: 0.35rem solid var(--separator-color);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.28);
+}
+
+.app-toast .toast-body {
+  font-weight: 600;
+}
+
+.app-toast-success {
+  border-color: var(--bs-success-border-subtle);
+}
+
+.app-toast-danger {
+  border-color: var(--bs-danger-border-subtle);
+}
+
+.app-toast-warning {
+  border-color: var(--bs-warning-border-subtle);
+}
+
+.app-toast-info {
+  border-color: var(--bs-info-border-subtle);
+}
+
 .footer-content {
   max-width: 1600px;
   margin: 0 auto;

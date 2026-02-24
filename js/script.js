@@ -3,7 +3,6 @@
 window.addEventListener("load", init);
 
 const fileInput = document.getElementById("fileUpload");
-const fileInfo = document.getElementById("fileInfo");
 const typeSelect = document.getElementById("typeSelect");
 const sortSelect = document.getElementById("sortSelect");
 const resultsContainer = document.getElementById("results");
@@ -57,12 +56,7 @@ function init() {
     if (!file) return;
 
     if (!file.type.includes("text") && !file.name.endsWith(".csv")) {
-      if (fileInfo) {
-        fileInfo.innerHTML = "Please upload a valid text or CSV file.";
-        fileInfo.className = "alert alert-danger mt-3";
-      } else {
-        appendAlert("Please upload a valid text or CSV file.", "danger");
-      }
+      appendAlert("Please upload a valid text or CSV file.", "danger");
       return;
     }
 
@@ -117,19 +111,45 @@ function init() {
   });
 }
 
-const alertPlaceholder = document.getElementById("liveAlertPlaceholder");
+const toastContainer = document.getElementById("liveToastContainer");
 
 /** @type {(message: string, type: string) => void} */
 function appendAlert(message, type) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = [
-    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
-    `   <div>${message}</div>`,
-    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-    "</div>",
-  ].join("");
+  if (!toastContainer) return;
 
-  alertPlaceholder.append(wrapper);
+  const normalizedType =
+    type === "success" || type === "danger" || type === "warning"
+      ? type
+      : "info";
+  const isError = normalizedType === "danger";
+
+  const toastEl = document.createElement("div");
+  toastEl.className = `toast align-items-center app-toast app-toast-${normalizedType}`;
+  toastEl.setAttribute("role", isError ? "alert" : "status");
+  toastEl.setAttribute("aria-live", isError ? "assertive" : "polite");
+  toastEl.setAttribute("aria-atomic", "true");
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body"></div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  const body = toastEl.querySelector(".toast-body");
+  if (body) body.textContent = String(message || "");
+
+  toastContainer.appendChild(toastEl);
+
+  toastEl.addEventListener("hidden.bs.toast", () => {
+    toastEl.remove();
+  });
+
+  if (!window.bootstrap?.Toast) return;
+  const instance = window.bootstrap.Toast.getOrCreateInstance(toastEl, {
+    autohide: true,
+    delay: 3500,
+  });
+  instance.show();
 }
 
 function hideTempHeaders() {

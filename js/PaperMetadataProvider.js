@@ -95,6 +95,99 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
     );
   }
 
+  function isSpringerDoi(doi) {
+    return /^10\.(1007|1186)\//i.test(normalizeDoi(doi));
+  }
+
+  function isLikelyImageUrl(url) {
+    const value = String(url || "").toLowerCase();
+    return /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/.test(value);
+  }
+
+  function pickCrossrefImageUrl(work) {
+    const links = Array.isArray(work?.link) ? work.link : [];
+
+    const imageLink = links.find((link) =>
+      String(link?.["content-type"] || "")
+        .toLowerCase()
+        .startsWith("image/"),
+    );
+    if (imageLink?.URL) return String(imageLink.URL);
+
+    const likelyImageLink = links.find((link) => isLikelyImageUrl(link?.URL));
+    if (likelyImageLink?.URL) return String(likelyImageLink.URL);
+
+    return null;
+  }
+
+  function extractSpringerJournalIdFromDoi(doi) {
+    const normalized = normalizeDoi(doi);
+    const match = normalized.match(/^10\.(1007|1186)\/s(\d{4,6})(?:[-/]|$)/i);
+    return match?.[2] || null;
+  }
+
+  function extractSpringerJournalIdFromUrl(url) {
+    const value = String(url || "").trim();
+    const match = value.match(/\/journal\/(\d{4,6})(?:[/?#]|$)/i);
+    return match?.[1] || null;
+  }
+
+  function buildSpringerJournalCoverCandidates(journalId) {
+    if (!journalId) return [];
+    return [
+      `https://media.springernature.com/full/springer-static/cover-hires/journal/${journalId}`,
+      `https://media.springernature.com/w158/springer-static/cover-hires/journal/${journalId}`,
+    ];
+  }
+
+  function canLoadImageUrl(imageSrc) {
+    return new Promise((resolve) => {
+      const safeUrl = toSafeHttpUrl(imageSrc);
+      if (!safeUrl) {
+        resolve(false);
+        return;
+      }
+
+      const img = new Image();
+      let settled = false;
+
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        resolve(ok);
+      };
+
+      const timeoutId = setTimeout(() => finish(false), 5000);
+      img.onload = () => {
+        clearTimeout(timeoutId);
+        finish(true);
+      };
+      img.onerror = () => {
+        clearTimeout(timeoutId);
+        finish(false);
+      };
+
+      img.src = safeUrl;
+    });
+  }
+
+  async function resolveSpringerJournalCoverUrl(doi, landingUrl) {
+    const journalId =
+      extractSpringerJournalIdFromDoi(doi) ||
+      extractSpringerJournalIdFromUrl(landingUrl);
+
+    if (!journalId) return null;
+
+    const candidates = buildSpringerJournalCoverCandidates(journalId);
+    for (const candidate of candidates) {
+      if (await canLoadImageUrl(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
   function scoreCrossrefCandidate(work, item) {
     const targetTitle = normalizeForMatch(item?.title);
     const targetAuthor = normalizeForMatch(item?.author);
@@ -114,6 +207,7 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
     const doi = normalizeDoi(work?.DOI);
     const workType = String(work?.type || "").toLowerCase();
 
+    if (isSpringerDoi(doi)) score += 2;
     if (workType === "journal-article") score += 2;
     if (workType === "posted-content") score -= 2;
     if (/^10\.21203\//i.test(doi)) score -= 2;
@@ -133,7 +227,7 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
       "query.bibliographic": query,
       rows: "8",
       select:
-        "DOI,URL,title,author,issued,published-print,published-online,created,type",
+        "DOI,URL,title,author,issued,published-print,published-online,created,link,type",
     });
 
     const res = await fetch(`${CROSSREF_WORKS_URL}?${params}`);
@@ -152,13 +246,35 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
     const doi = normalizeDoi(best?.DOI);
     const doiUrl = toSafeHttpUrl(toDoiUrl(doi));
     const landingUrl = toSafeHttpUrl(best?.URL) || doiUrl || null;
+    let imageUrl = toSafeHttpUrl(pickCrossrefImageUrl(best));
 
-    if (!doi && !landingUrl) return null;
+    if (!imageUrl) {
+      imageUrl = await resolveSpringerJournalCoverUrl(doi, landingUrl);
+
+      // If the top match is not Springer (e.g., a preprint), try a Springer result.
+      if (!imageUrl) {
+        const springerFallback = items
+          .map((work) => ({ work, score: scoreCrossrefCandidate(work, item) }))
+          .sort((a, b) => b.score - a.score)
+          .map((entry) => entry.work)
+          .find((work) => isSpringerDoi(work?.DOI));
+
+        if (springerFallback) {
+          imageUrl = await resolveSpringerJournalCoverUrl(
+            springerFallback?.DOI,
+            springerFallback?.URL,
+          );
+        }
+      }
+    }
+
+    if (!doi && !landingUrl && !imageUrl) return null;
 
     return {
       doi: doi || null,
       doiUrl,
       landingUrl,
+      imageUrl,
       source: "crossref",
     };
   }
