@@ -151,7 +151,7 @@ class CatalogItem {
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="${CatalogItem.DETAIL_MODAL_ID}Label">Item details</h1>
+                        <p class="modal-title h5" id="${CatalogItem.DETAIL_MODAL_ID}Label">Item details</p>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -403,10 +403,10 @@ class CatalogItem {
     const col = document.createElement("div");
     col.className = "col-6 col-md-4 col-lg-3";
 
-    const card = document.createElement("div");
+    const card = document.createElement("article");
     card.className = "card h-100 catalog-item-card catalog-item-card--compact";
 
-    const body = document.createElement("div");
+    const body = document.createElement("section");
     body.className = "card-body p-2";
 
     const rating = uiSafeRating(this.rating);
@@ -415,14 +415,14 @@ class CatalogItem {
     const genreText = this.genre || "Unknown";
 
     body.innerHTML = `
-            <h6 class="card-title mb-1">${uiEscapeHtml(this.title || "Untitled")}</h6>
+            <p class="card-title h6 mb-1">${uiEscapeHtml(this.title || "Untitled")}</p>
             <p class="card-subtitle small mb-1">${uiEscapeHtml(subtitle)}</p>
-            <div class="d-flex flex-wrap align-items-center gap-1">
-                <span class="badge bg-secondary text-uppercase">${uiEscapeHtml(typeText)}</span>
-                <span class="badge bg-secondary border">Genre: ${uiEscapeHtml(genreText)}</span>
-                ${rating !== null ? `<span class="rating-badge badge">${uiEscapeHtml(rating)} &starf;</span>` : ""}
-                <span class="card-details small ms-auto">Click for details</span>
-            </div>
+        <footer class="d-flex flex-wrap align-items-center gap-1">
+          <small class="badge bg-secondary text-uppercase">${uiEscapeHtml(typeText)}</small>
+          <small class="badge bg-secondary border">Genre: ${uiEscapeHtml(genreText)}</small>
+          ${rating !== null ? `<small class="rating-badge badge">${uiEscapeHtml(rating)} &starf;</small>` : ""}
+          <small class="card-details ms-auto">Click for details</small>
+        </footer>
         `;
 
     card.appendChild(body);

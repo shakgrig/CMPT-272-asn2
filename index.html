@@ -23,20 +23,21 @@
 <body>
   <!-- Header Start -->
   <header class="site-header">
-    <div class="header-content">
+    <section class="header-content">
       <div class="logo">
         <p class="h1 d-flex align-items-center gap-2 mb-0">
           <span class="logo-mark" aria-hidden="true">📚</span>
           <a href="./index.html">Totally Real Bookstore</a>
         </p>
       </div>
-    </div>
+    </section>
     <!-- Theme Controller Menu -->
-    <div class="theme-menu">
-      <button class="theme-button" type="button">
+    <nav class="theme-menu" aria-label="Theme selector">
+      <button class="theme-button" type="button" aria-label="Theme menu">
         <span class="theme-icon">&#128880;</span>
       </button>
-      <div class="theme-selector">
+      <fieldset class="theme-selector">
+        <legend class="visually-hidden">Theme options</legend>
         <label class="theme-option">
           <input type="radio" name="theme" id="theme-light">
           <span class="icon">&#9788;</span> Light
@@ -49,21 +50,21 @@
           <input type="radio" name="theme" id="theme-system" checked>
           <span class="icon">&#128435;</span> System
         </label>
-      </div>
-    </div>
+      </fieldset>
+    </nav>
   </header>
   <!-- Header End -->
   <section id="files" class="mb-4">
-    <div class="card shadow-sm">
-      <div class="card-header d-flex align-items-center flex-wrap justify-content-start">
-        <span class="fw-semibold me-auto">File Uploads: FileReader + input type="file"</span>
-        <div class="d-flex flex-wrap gap-1">
-          <span class="badge text-bg-secondary">JavaScript</span>
-          <span class="badge text-bg-secondary">CSV</span>
-          <span class="badge text-bg-secondary">Bootstrap</span>
-        </div>
-      </div>
-      <div class="card-body">
+    <article class="card shadow-sm">
+      <header class="card-header d-flex align-items-center flex-wrap justify-content-start">
+        <p class="h6 fw-semibold me-auto mb-0">File Uploads: FileReader + input type="file"</p>
+        <ul class="d-flex flex-wrap gap-1 list-unstyled mb-0">
+          <li><small class="badge text-bg-secondary">JavaScript</small></li>
+          <li><small class="badge text-bg-secondary">CSV</small></li>
+          <li><small class="badge text-bg-secondary">Bootstrap</small></li>
+        </ul>
+      </header>
+      <section class="card-body">
         <fieldset class="row g-3">
           <legend class="small mb-3">
             Read a local file using an <code>&lt;input type="file"&gt;</code> and <code>FileReader</code>.
@@ -92,18 +93,18 @@
             </select>
           </div>
         </fieldset>
-        <div id="liveToastContainer"
-          class="toast-container app-toast-container position-fixed bottom-0 start-0 p-3">
-        </div>
-      </div>
-    </div>
+        <aside id="liveToastContainer" class="toast-container app-toast-container position-fixed bottom-0 start-0 p-3"
+          aria-live="polite" aria-atomic="true" aria-relevant="additions text">
+        </aside>
+      </section>
+    </article>
   </section>
   <main>
     <section class="generated-cards align-items-center justify-content-center">
-      <p class="temp-header h1  mx-auto">No Matching Items</p>
+      <p class="temp-header h1 mx-auto">No Matching Items</p>
       <p class="temp-sub-header mx-auto">Try adjusting your filter, or sort.</p>
       <div class="container my-4">
-        <div id="results" class="row g-3"></div>
+        <section id="results" class="row g-3" aria-live="polite"></section>
       </div>
     </section>
   </main>
@@ -111,11 +112,11 @@
   <footer class="site-footer">
     <!-- <div class="footer-content">
     </div> -->
-    <div class="footer-bottom">
+    <section class="footer-bottom">
       <small class="footer-course">CMPT 272 - Assignment 2</small>
       <small class="footer-copyright">&copy; Copyright 2026 Peter Iliopulos, 301660766. All rights reserved.</small>
       <small id="last-update" class="footer-date align"></small>
-    </div>
+    </section>
   </footer>
   <!-- Footer End -->
 </body>

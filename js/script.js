@@ -129,10 +129,10 @@ function appendAlert(message, type) {
   toastEl.setAttribute("aria-live", isError ? "assertive" : "polite");
   toastEl.setAttribute("aria-atomic", "true");
   toastEl.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body"></div>
+    <section class="d-flex">
+      <p class="toast-body mb-0"></p>
       <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
+    </section>
   `;
 
   const body = toastEl.querySelector(".toast-body");

@@ -1,48 +1,48 @@
- /*CSS from assignment 1 that is no longer used. */
- /*Theme Variables */
+/*CSS from assignment 1 that is no longer used. */
+/*Theme Variables */
 :root {
-     /*Light palette */
-    --light-button-color: #29a646;
-    --light-button-color-hover: hsl(
-            from var(--light-button-color) h s calc(l * 0.8)
-    );
-    --light-accent-color: #5e45ce;
-    --light-accent-color-hover: hsl(
-            from var(--light-accent-color) h s calc(l * 0.8)
-    );
-    --light-price-color: #e74c3c;
+  /*Light palette */
+  --light-button-color: #29a646;
+  --light-button-color-hover: hsl(
+    from var(--light-button-color) h s calc(l * 0.8)
+  );
+  --light-accent-color: #5e45ce;
+  --light-accent-color-hover: hsl(
+    from var(--light-accent-color) h s calc(l * 0.8)
+  );
+  --light-price-color: #e74c3c;
 
-     /*Dark palette */
-    --dark-button-color: color-mix(
-            in srgb,
-            var(--light-button-color) 70%,
-            var(--light-primary-color) 30%
-    );
-    --dark-button-color-hover: hsl(
-            from var(--dark-button-color) h s calc(l * 0.8)
-    );
-    --dark-price-color: color-mix(
-      in srgb,
+  /*Dark palette */
+  --dark-button-color: color-mix(
+    in srgb,
+    var(--light-button-color) 70%,
+    var(--light-primary-color) 30%
+  );
+  --dark-button-color-hover: hsl(
+    from var(--dark-button-color) h s calc(l * 0.8)
+  );
+  --dark-price-color: color-mix(
+    in srgb,
     var(--light-price-color) 70%,
     var(--dark-primary-bg-color) 30%
-    );
+  );
 }
 
- /*Default and Force Light */
+/*Default and Force Light */
 :root,
 :root:has(#theme-light:checked) {
-    --price-color: var(--light-price-color);
+  --price-color: var(--light-price-color);
 }
 
- /*Force Dark */
+/*Force Dark */
 :root:has(#theme-dark:checked) {
-    --price-color: var(--dark-price-color);
+  --price-color: var(--dark-price-color);
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
-        --price-color: var(--dark-price-color);
-    }
+  :root {
+    --price-color: var(--dark-price-color);
+  }
 }
 
 .main-nav {
@@ -92,11 +92,11 @@
 }
 
 .payment-methods img {
-    max-width: 100%;
-    height: auto;
+  max-width: 100%;
+  height: auto;
 }
 
- /*Gallery */
+/*Gallery */
 .product-gallery,
 .product-gallery-row {
   max-width: 100%;
@@ -232,7 +232,7 @@
   }
 }
 
- /*Product Page */
+/*Product Page */
 .product-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -272,6 +272,7 @@
   font-size: 28px;
   font-weight: bold;
   margin: 10px 0;
+  color: var(--price-color);
 }
 
 .product-rating {
@@ -339,6 +340,10 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s;
+}
+
+.add-to-cart-btn:hover {
+  background-color: var(--button-color-hover);
 }
 
 .add-to-cart-btn.small {
@@ -440,14 +445,194 @@
   margin: 10px 0;
 }
 
-
- /*About Section */
+/*About Section */
 .about-section {
-    padding: 40px 20px 20px;
+  padding: 40px 20px 20px;
 }
 
 .about-section .h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 28px;
+}
+
+/* Moved from style.css (currently unused in assignment 2 UI) */
+.header-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-link {
+  font-size: 24px;
+  padding: 8px;
+}
+
+.icon-link:hover {
+  opacity: 0.8;
+  text-decoration: none;
+}
+
+.footer-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.footer-section {
+  flex: 0 0 auto;
+  margin: 0 15px;
+  min-width: 160px;
+  max-width: 70%;
+}
+
+.footer-section.brand,
+.footer-section.about {
+  flex: 1 1 400px;
+}
+
+.footer-section .h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.footer-section.about .h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-section.about .h3 a:hover,
+.footer-section.about .h3 a:focus {
+  text-decoration: underline;
+}
+
+.footer-section .h4 {
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.footer-section .h5 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.footer-section p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.feature-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feature-icon {
+  font-size: 24px;
+}
+
+.feature-text {
+  font-size: 14px;
+}
+
+.social-link:hover {
+  text-decoration: none;
+}
+
+.social-link svg {
+  width: 32px;
+  height: 32px;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-section ul li {
+  margin: 8px 0;
+}
+
+.footer-bottom .h2 {
+  margin: 20px 0 0;
+}
+
+@media (max-width: 768px) {
+  .header-icons {
+    order: 1;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    flex: 0 0 auto;
+  }
+
+  .cart-count {
+    display: none;
+  }
+
+  .main-nav {
+    order: 2;
+    width: 100%;
     margin-top: 0;
-    margin-bottom: 12px;
-    font-size: 28px;
+    flex: 0 0 100%;
+    position: static;
+  }
+
+  .main-nav ul {
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .main-nav ul > li {
+    flex: 0 0 auto;
+  }
+
+  .product-page {
+    padding: 20px 12px;
+  }
+
+  .product-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .main-image,
+  .product-details {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .product-details {
+    min-width: 0;
+  }
+
+  .footer-content {
+    flex-direction: column;
+  }
+
+  .footer-section {
+    max-width: 100%;
+  }
+}
+
+.footer-section p,
+.footer-section ul li a {
+  color: lightgray;
 }
