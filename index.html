@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/style_new.css">
   <script src="js/ImageGetter.js" defer></script>
+  <script src="js/PaperMetadataProvider.js" defer></script>
   <script src="js/InferCoverSource.js" defer></script>
   <script src="js/script.js" defer></script>
 </head>
@@ -27,7 +28,7 @@
           <a href="./index.html">Totally Real Bookstore</a>
         </p>
       </div>
-      <nav class="main-nav" aria-label="main-nav">
+      <!-- <nav class="main-nav" aria-label="main-nav">
         <ul>
           <li>
             <a href="#gallery">Gallery</a>
@@ -36,15 +37,15 @@
             <a href="#about">About</a>
           </li>
         </ul>
-      </nav>
-      <div class="header-icons">
+      </nav> -->
+      <!-- <div class="header-icons">
         <a href="#account"
           onclick="alert('Sorry, our account server caught fire, please try again later.'); return false;"
           class="icon-link">&#128100;</a>
         <a href="#cart"
           onclick="alert('Sorry, our payment processing is down right now, please try again later.'); return false;"
           class="icon-link">&#128722; <span class="cart-count">$0.00</span></a>
-      </div>
+      </div> -->
     </div>
     <!-- Theme Controller Menu -->
     <div class="theme-menu">
@@ -68,9 +69,6 @@
     </div>
   </header>
   <!-- Header End -->
-  <!-- PROF EXAMPLE Start -->
-  <!--  <input id="fileInput" type="file" name="file">-->
-  <!--  <pre id="fileContent"></pre>-->
   <section id="files" class="mb-4">
     <div class="card shadow-sm">
       <div class="card-header d-flex align-items-center flex-wrap justify-content-start">
@@ -82,64 +80,58 @@
         </div>
       </div>
       <div class="card-body">
-        <p class="text-muted mb-3">
-          Read a local file using an <code>&lt;input type="file"&gt;</code> and <code>FileReader</code>.
-        </p>
-        <form action="#" class="mb-3">
-          <label for="fileUpload" class="form-label">Upload a CSV file:</label>
-          <input type="file" id="fileUpload" name="fileUpload" class="form-control" accept=".csv">
-          <!-- <button type="submit">Submit</button> -->
-        </form>
+        <!-- <fieldset class="d-flex flex-wrap gap-1"> -->
+        <fieldset class="row g-3">
+          <legend class="small mb-3">
+            Read a local file using an <code>&lt;input type="file"&gt;</code> and <code>FileReader</code>.
+          </legend>
+          <!-- <form action="#" class="mb-3"> -->
+          <div class="col-auto">
+            <label for="fileUpload" class="form-label">Upload a CSV file:</label>
+            <input type="file" id="fileUpload" name="fileUpload" class="form-control" accept=".csv">
+            <!-- <button type="submit">Submit</button> -->
+            <!-- </form> -->
+          </div>
+          <!-- TODO: Make selections start disable, and unlock after upload. -->
+          <div class="col-auto mb-3">
+            <label for="typeSelect" class="form-label">Type</label>
+            <select id="typeSelect" class="form-select">
+              <option>All</option>
+              <option>NEED_TO_GENERATE_THE_OTHERS_FROM_INPUT</option>
+            </select>
+          </div>
+          <div class="col-auto mb-3">
+            <label for="sortSelect" class="form-label">Sort</label>
+            <select id="sortSelect" class="form-select">
+              <option>None</option>
+              <option>Title</option>
+              <option>Type</option>
+              <option>Author</option>
+              <option>Year</option>
+              <option>Genre</option>
+              <option>Rating</option>
+              <option>Description</option>
+            </select>
+          </div>
+        </fieldset>
         <!--        <div id="fileInfo" class="alert alert-light border mb-0" style="white-space: pre-wrap;"></div>-->
         <div id="liveAlertPlaceholder"></div>
       </div>
     </div>
   </section>
-  <!-- PROF EXAMPLE End -->
-  <main class="products">
-    <section class="related-products">
-      <p class="h2">Related Books</p>
-      <div class="products-grid">
-        <div class="product-card">
-          <div class="product-link">
-            <img src="assets/placeholder_viewboxed_600x900_combo.svg" alt="Is This Poison book cover">
-          </div>
-          <p class="h3 product-name">Is This Poison?</p>
-        </div>
-        <div class="product-card">
-          <div class="product-link">
-            <img src="assets/placeholder_viewboxed_600x900_combo.svg" alt="Where Am I book cover">
-          </div>
-          <p class="h3 product-name">Where Am I?</p>
-        </div>
+  <main>
+    <section class="generated-cards align-items-center justify-content-center">
+      <p class="temp-header h1  mx-auto">No Matching Items</p>
+      <p class="temp-sub-header mx-auto">Try adjusting your filter, or sort.</p>
+      <div class="container my-4">
+        <div id="results" class="row g-3"></div>
       </div>
     </section>
-    <div class="container my-4">
-      <div id="results" class="row g-3"></div>
-    </div>
   </main>
   <!-- Footer Start -->
   <footer class="site-footer">
-    <div class="footer-content">
-      <div class="footer-section about">
-        <p class="h3">Promoting <a href="./pages/secret.html">Authentic Literature</a></p>
-        <p>
-          Totally Real Bookstore is committed to promoting authentic
-          literature and providing readers with a unique and genuine literary
-          experience. We strive to create a welcoming and inclusive
-          environment, where readers can explore the endless possibilities of
-          the written word.
-        </p>
-      </div>
-      <div class="footer-section shop-links">
-        <p class="h5">Shop</p>
-        <div class="shop-flex">
-          <ul>
-            <li><a href="#gallery">Gallery</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
+    <!-- <div class="footer-content">
+    </div> -->
     <div class="footer-bottom">
       <small class="footer-copyright">&copy; Copyright 2026 Peter Iliopulos, 301660766. All rights reserved.</small>
       <small id="last-update" class="footer-date align"></small>

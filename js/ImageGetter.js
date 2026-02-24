@@ -5,7 +5,6 @@ const WIKIPEDIA_REST_SUMMARY_URL =
   "https://en.wikipedia.org/api/rest_v1/page/summary";
 const DEFAULT_PLACEHOLDER_SRC =
   "assets/placeholder_viewboxed_600x900_combo.svg";
-const DETAIL_MODAL_ID = "catalogItemDetailModal";
 const CROSSREF_WORKS_URL = "https://api.crossref.org/works";
 
 const TYPE_PLACEHOLDER_TEXT = {
@@ -26,8 +25,6 @@ const TYPE_PLACEHOLDER_ICON = {
   unknown: "📦",
 };
 
-const modalImagePreloadMap = new Map();
-const modalImageResolvedMap = new Map();
 const paperMetadataMap = new Map();
 const paperMetadataPendingMap = new Map();
 
@@ -62,6 +59,15 @@ function normalizeType(type) {
   return String(type || "")
     .trim()
     .toLowerCase();
+}
+
+function getImageItemKey(item) {
+  return [
+    String(item?.title || "").trim(),
+    String(item?.type || "").trim(),
+    String(item?.author || "").trim(),
+    String(item?.year ?? "").trim(),
+  ].join("|");
 }
 
 function isValidYear(year) {
@@ -500,12 +506,8 @@ async function fetchPaperMetadataFromCrossref(paper) {
   };
 }
 
-function getCachedPaperMetadata(paper) {
-  return paperMetadataMap.get(getModalItemKey(paper)) || null;
-}
-
 async function getPaperMetadata(paper) {
-  const key = getModalItemKey(paper);
+  const key = getImageItemKey(paper);
 
   if (paperMetadataMap.has(key)) {
     return paperMetadataMap.get(key);
@@ -640,382 +642,6 @@ async function getFallbackCoverForType(item) {
   const type = normalizeType(item?.type);
   if (!type) return DEFAULT_PLACEHOLDER_SRC;
   return getTypePlaceholder(type);
-}
-
-function formatSubtitle(book) {
-  const author = String(book?.author || "").trim();
-  const year = isValidYear(book?.year) ? String(book.year) : "";
-  if (author && year) return `${author} (${year})`;
-  if (author) return author;
-  if (year) return year;
-  return "Unknown";
-}
-
-function safeText(value, fallback = "") {
-  const text = String(value ?? "").trim();
-  return text || fallback;
-}
-
-function safeRating(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const n = Number(value);
-  if (!Number.isFinite(n)) return String(value);
-  return n.toFixed(1);
-}
-
-function getModalItemKey(item) {
-  return [
-    safeText(item?.title, ""),
-    safeText(item?.type, ""),
-    safeText(item?.author, ""),
-    String(item?.year ?? ""),
-  ].join("|");
-}
-
-function setModalImage(modal, title, typeText, imageSrc) {
-  const modalImage = modal?.querySelector("[data-modal-image]");
-  if (!modalImage) return;
-
-  modalImage.src = imageSrc || DEFAULT_PLACEHOLDER_SRC;
-  modalImage.alt = `${title} ${typeText} cover`;
-  modalImage.onerror = function () {
-    modalImage.src = DEFAULT_PLACEHOLDER_SRC;
-  };
-}
-
-function renderModalFields(modal, item) {
-  const modalFields = modal?.querySelector("[data-modal-fields]");
-  if (!modalFields) return;
-
-  const typeText = safeText(item?.type, "Unknown");
-  const author = safeText(item?.author, "Unknown");
-  const year = isValidYear(item?.year) ? String(item.year) : "Unknown";
-  const genre = safeText(item?.genre, "Unknown");
-  const rating = safeRating(item?.rating);
-  const description = safeText(item?.description, "No description provided.");
-
-  const rows = [
-    { label: "Type", value: typeText },
-    { label: "Author / Creator", value: author },
-    { label: "Year", value: year },
-    { label: "Genre", value: genre },
-    { label: "Rating", value: rating !== null ? `${rating} ★` : "N/A" },
-    { label: "Description", value: description },
-  ];
-
-  if (normalizeType(item?.type) === "paper") {
-    const metadata = getCachedPaperMetadata(item);
-    if (metadata?.doiUrl) {
-      rows.push({
-        label: "DOI",
-        value: metadata.doi || metadata.doiUrl,
-        href: metadata.doiUrl,
-      });
-    } else if (metadata?.landingUrl) {
-      rows.push({
-        label: "Paper URL",
-        value: metadata.landingUrl,
-        href: metadata.landingUrl,
-      });
-    } else {
-      rows.push({ label: "DOI", value: "Searching Crossref…" });
-    }
-  }
-
-  modalFields.innerHTML = rows
-    .map((row) => {
-      const label = escapeHtml(row.label);
-      const value = escapeHtml(row.value);
-      const href = toSafeHttpUrl(row.href);
-
-      const renderedValue = href
-        ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${value}</a>`
-        : value;
-
-      return `
-        <dt class="col-5 text-muted">${label}</dt>
-        <dd class="col-7">${renderedValue}</dd>
-      `;
-    })
-    .join("");
-}
-
-function renderModalRaw(modal, item) {
-  const modalRaw = modal?.querySelector("[data-modal-raw]");
-  if (!modalRaw) return;
-
-  const rawData = {
-    title: safeText(item?.title, ""),
-    type: safeText(item?.type, ""),
-    author: safeText(item?.author, ""),
-    year: Number.isFinite(Number(item?.year)) ? Number(item.year) : item?.year,
-    genre: safeText(item?.genre, ""),
-    rating:
-      item?.rating === undefined || item?.rating === null
-        ? null
-        : Number.isFinite(Number(item?.rating))
-          ? Number(item.rating)
-          : item.rating,
-    description: safeText(item?.description, ""),
-  };
-
-  if (normalizeType(item?.type) === "paper") {
-    const metadata = getCachedPaperMetadata(item);
-    rawData.doi = metadata?.doi || null;
-    rawData.doiUrl = metadata?.doiUrl || null;
-    rawData.paperUrl = metadata?.landingUrl || null;
-    rawData.paperMetaSource = metadata?.source || null;
-  }
-
-  modalRaw.textContent = JSON.stringify(rawData, null, 2);
-}
-
-function ensureCatalogDetailModal() {
-  let modal = document.getElementById(DETAIL_MODAL_ID);
-  if (modal) return modal;
-
-  modal = document.createElement("div");
-  modal.className = "modal fade";
-  modal.id = DETAIL_MODAL_ID;
-  modal.tabIndex = -1;
-  modal.setAttribute("aria-labelledby", `${DETAIL_MODAL_ID}Label`);
-  modal.setAttribute("aria-hidden", "true");
-
-  modal.innerHTML = `
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="${DETAIL_MODAL_ID}Label">Item details</h1>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-12 col-md-5">
-              <img class="img-fluid rounded border w-100" data-modal-image src="${DEFAULT_PLACEHOLDER_SRC}" alt="Item cover">
-            </div>
-            <div class="col-12 col-md-7">
-              <dl class="row mb-0" data-modal-fields></dl>
-            </div>
-          </div>
-          <hr>
-          <h2 class="h6">Raw parsed data</h2>
-          <pre class="small border rounded p-2 mb-0" data-modal-raw></pre>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-  return modal;
-}
-
-function openCatalogItemModal(item, imageSrc) {
-  const modal = ensureCatalogDetailModal();
-
-  const title = safeText(item?.title, "Untitled");
-  const typeText = safeText(item?.type, "Unknown");
-
-  const modalTitle = modal.querySelector(`#${DETAIL_MODAL_ID}Label`);
-
-  modal.dataset.currentItemKey = getModalItemKey(item);
-
-  if (modalTitle) {
-    modalTitle.textContent = title;
-  }
-
-  setModalImage(modal, title, typeText, imageSrc);
-
-  renderModalFields(modal, item);
-  renderModalRaw(modal, item);
-
-  if (window.bootstrap?.Modal) {
-    const modalInstance = window.bootstrap.Modal.getOrCreateInstance(modal);
-    modalInstance.show();
-  }
-}
-
-function updateModalImageIfCurrentItem(item, imageSrc) {
-  const modal = document.getElementById(DETAIL_MODAL_ID);
-  if (!modal) return;
-
-  const requestedKey = getModalItemKey(item);
-  if (modal.dataset.currentItemKey !== requestedKey) return;
-
-  const title = safeText(item?.title, "Untitled");
-  const typeText = safeText(item?.type, "Unknown");
-  setModalImage(modal, title, typeText, imageSrc || DEFAULT_PLACEHOLDER_SRC);
-}
-
-function refreshPaperModalMetadataIfCurrentItem(item) {
-  const modal = document.getElementById(DETAIL_MODAL_ID);
-  if (!modal) return;
-
-  const requestedKey = getModalItemKey(item);
-  if (modal.dataset.currentItemKey !== requestedKey) return;
-
-  renderModalFields(modal, item);
-  renderModalRaw(modal, item);
-
-  const metadata = getCachedPaperMetadata(item);
-  if (metadata?.imageUrl) {
-    const title = safeText(item?.title, "Untitled");
-    const typeText = safeText(item?.type, "Unknown");
-    setModalImage(modal, title, typeText, metadata.imageUrl);
-  }
-}
-
-async function resolveModalImageSource(item) {
-  const coverUrl = await getCover(item);
-  return coverUrl || (await getFallbackCoverForType(item));
-}
-
-function preloadImageToBrowserCache(imageSrc) {
-  return new Promise((resolve) => {
-    if (!imageSrc) {
-      resolve();
-      return;
-    }
-
-    const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => resolve();
-    img.src = imageSrc;
-  });
-}
-
-async function getPreloadedModalImageSource(item) {
-  const key = getModalItemKey(item);
-  if (modalImageResolvedMap.has(key)) {
-    return modalImageResolvedMap.get(key);
-  }
-
-  if (modalImagePreloadMap.has(key)) {
-    return modalImagePreloadMap.get(key);
-  }
-
-  const preloadPromise = (async () => {
-    try {
-      const imageSrc = await resolveModalImageSource(item);
-      await preloadImageToBrowserCache(imageSrc);
-      const resolved = imageSrc || DEFAULT_PLACEHOLDER_SRC;
-      modalImageResolvedMap.set(key, resolved);
-      return resolved;
-    } catch {
-      const resolved = DEFAULT_PLACEHOLDER_SRC;
-      modalImageResolvedMap.set(key, resolved);
-      return resolved;
-    }
-  })();
-
-  modalImagePreloadMap.set(key, preloadPromise);
-  return preloadPromise;
-}
-
-function preloadModalImagesInBackground(items = [], options = {}) {
-  if (!Array.isArray(items) || items.length === 0) return;
-
-  const requestedConcurrency = Number(options?.concurrency);
-  const concurrency = Number.isFinite(requestedConcurrency)
-    ? Math.min(6, Math.max(1, Math.floor(requestedConcurrency)))
-    : 2;
-
-  const queue = items.filter((item) => item && typeof item === "object");
-  let nextIndex = 0;
-  let active = 0;
-
-  const runNext = () => {
-    while (active < concurrency && nextIndex < queue.length) {
-      const item = queue[nextIndex++];
-      active += 1;
-
-      getPreloadedModalImageSource(item)
-        .catch(() => DEFAULT_PLACEHOLDER_SRC)
-        .finally(() => {
-          active -= 1;
-          runNext();
-        });
-    }
-  };
-
-  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-    window.requestIdleCallback(() => runNext(), { timeout: 1200 });
-  } else {
-    setTimeout(runNext, 0);
-  }
-}
-
-globalThis.preloadModalImagesInBackground = preloadModalImagesInBackground;
-
-async function createBookCard(book) {
-  const col = document.createElement("div");
-  col.className = "col-6 col-md-4 col-lg-3";
-
-  const card = document.createElement("div");
-  card.className = "card h-100 catalog-item-card catalog-item-card--compact";
-
-  // Card body
-  const body = document.createElement("div");
-  body.className = "card-body p-2";
-
-  const rating = safeRating(book?.rating);
-  const typeText = safeText(book?.type, "item");
-  const subtitle = formatSubtitle(book);
-
-  body.innerHTML = `
-    <h6 class="card-title mb-1">${escapeHtml(safeText(book?.title, "Untitled"))}</h6>
-    <p class="card-subtitle text-muted small mb-2">${escapeHtml(subtitle)}</p>
-    <div class="d-flex flex-wrap align-items-center gap-1">
-      <span class="badge bg-secondary text-uppercase">${escapeHtml(typeText)}</span>
-      ${rating !== null ? `<span class="badge bg-primary">${escapeHtml(rating)} ★</span>` : ""}
-      <span class="small text-muted ms-auto">Click for details</span>
-    </div>
-  `;
-
-  card.appendChild(body);
-
-  const trigger = document.createElement("button");
-  trigger.type = "button";
-  trigger.className =
-    "catalog-card-trigger btn p-0 border-0 bg-transparent text-start w-100 h-100";
-  trigger.setAttribute(
-    "aria-label",
-    `Open details for ${safeText(book?.title, "Untitled")}`,
-  );
-  trigger.addEventListener("click", async () => {
-    const key = getModalItemKey(book);
-    const readyImage = modalImageResolvedMap.get(key);
-
-    if (readyImage) {
-      openCatalogItemModal(book, readyImage);
-      return;
-    }
-
-    openCatalogItemModal(book, DEFAULT_PLACEHOLDER_SRC);
-    try {
-      const imageSrc = await getPreloadedModalImageSource(book);
-      updateModalImageIfCurrentItem(book, imageSrc);
-    } catch {
-      // Keep placeholder on failure.
-    }
-
-    if (normalizeType(book?.type) === "paper") {
-      getPaperMetadata(book)
-        .then(() => {
-          refreshPaperModalMetadataIfCurrentItem(book);
-        })
-        .catch(() => {
-          refreshPaperModalMetadataIfCurrentItem(book);
-        });
-    }
-  });
-  trigger.appendChild(card);
-
-  col.appendChild(trigger);
-
-  return col;
 }
 
 function clearLocalStorage() {
