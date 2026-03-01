@@ -2,14 +2,6 @@
 /*Theme Variables */
 :root {
   /*Light palette */
-  --light-button-color: #29a646;
-  --light-button-color-hover: hsl(
-    from var(--light-button-color) h s calc(l * 0.8)
-  );
-  --light-accent-color: #5e45ce;
-  --light-accent-color-hover: hsl(
-    from var(--light-accent-color) h s calc(l * 0.8)
-  );
   --light-price-color: #e74c3c;
   --light-footer-color: #222;
 

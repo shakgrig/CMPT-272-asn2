@@ -151,7 +151,7 @@ class CatalogItem {
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <p class="modal-title h5" id="${CatalogItem.DETAIL_MODAL_ID}Label">Item details</p>
+                        <h5 class="modal-title" id="${CatalogItem.DETAIL_MODAL_ID}Label">Item details</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -415,8 +415,8 @@ class CatalogItem {
     const genreText = this.genre || "Unknown";
 
     body.innerHTML = `
-            <p class="card-title h6 mb-1">${uiEscapeHtml(this.title || "Untitled")}</p>
-            <p class="card-subtitle small mb-1">${uiEscapeHtml(subtitle)}</p>
+        <h6 class="card-title mb-1">${uiEscapeHtml(this.title || "Untitled")}</h6>
+        <small class="card-subtitle mb-1">${uiEscapeHtml(subtitle)}</small>
         <footer class="d-flex flex-wrap align-items-center gap-1">
           <small class="badge bg-secondary text-uppercase">${uiEscapeHtml(typeText)}</small>
           <small class="badge bg-secondary border">Genre: ${uiEscapeHtml(genreText)}</small>
