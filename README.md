@@ -198,6 +198,14 @@ You may discuss ideas, but all code/design must be your own. You are allowed to 
 | UI, Bootstrap usage, and Code Organization                                                                  | **3 pts Full Marks 0 pts No Marks** |         / 3 pts |
 |                                                                                                             |                                     | Total Points: 0 |
 
+## Non-Instructional Notes Section
+
+I aknowledge that I used AI to help with some of the API stuff as I have only ever done that in a node/express/react environment which is very different from vanilla JS. You can also completely ignore the API stuff if it violates the assignment rules, and you can even delete them as it was designed to not matter if it was missing.
+
+## Author
+
+[Peter Iliopoulos, 301660766](https://github.sfu.ca/pai)
+
 <!-- Best I can do to hide on GitHub, but still apply locally -->
 
 <details hidden><summary></summary><style>code:not(:has(span)){color:red;}</style></details>

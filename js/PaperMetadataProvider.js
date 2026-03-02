@@ -1,48 +1,23 @@
 "use strict";
 
-/**
- * @typedef {Object} CatalogLikeItem
- * @property {string} [title] Candidate publication title.
- * @property {string} [type] Catalog type (only `paper` is preloaded by this module).
- * @property {string} [author] Primary author text used in query/scoring heuristics.
- * @property {number|string} [year] Publication year used for matching confidence.
- */
-
-/**
- * @typedef {Object} PaperMetadata
- * @property {string|null} doi Normalized DOI text without resolver prefix.
- * @property {string|null} doiUrl Canonical DOI resolver URL.
- * @property {string|null} landingUrl Best known HTTP URL for article landing page.
- * @property {string|null} imageUrl Optional resolved cover/thumbnail URL.
- * @property {string} source Metadata source identifier.
- */
-
-/**
- * @typedef {Object} PaperMetadataProviderApi
- * @property {(item: CatalogLikeItem) => (PaperMetadata|null)} getCached Reads already-computed metadata by stable item key.
- * @property {(item: CatalogLikeItem) => Promise<(PaperMetadata|null)>} get Fetches metadata with in-flight request de-duplication.
- * @property {(items?: CatalogLikeItem[], options?: {concurrency?: number}) => void} preload Background warmup for many paper-like items.
- */
-
-/** @type {PaperMetadataProviderApi} */
-const CATALOG_PAPER_METADATA_PROVIDER = (() => {
+const CATALOG_PAPER_METADATA_PROVIDER = (function () {
   const CROSSREF_WORKS_URL = "https://api.crossref.org/works";
   const metadataMap = new Map();
   const pendingMap = new Map();
 
   /**
-   * Converts unknown values to trimmed text.
-   * @param {unknown} value Arbitrary value from item/work payloads.
-   * @returns {string} Trimmed string representation.
+   * Converts unknown values to trimmed strings.
+   * @param {any} value Input value.
+   * @returns {string} Trimmed string result.
    */
   function safeText(value) {
-    return String(value ?? "").trim();
+    return String(value == null ? "" : value).trim();
   }
 
   /**
-   * Normalizes type strings for comparisons.
-   * @param {string} type Raw type value from item data.
-   * @returns {string} Lowercased/trimmed token suitable for equality checks.
+   * Normalizes a type label for comparisons.
+   * @param {string} type Raw type string.
+   * @returns {string} Lowercase trimmed type.
    */
   function normalizeType(type) {
     return String(type || "")
@@ -51,33 +26,32 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Checks whether the year is in a reasonable range.
-   * @param {number|string|null|undefined} year Candidate publication year.
-   * @returns {boolean} True when finite and in a likely real-world range.
+   * Checks whether a year value is numeric.
+   * @param {number|string} year Year candidate.
+   * @returns {boolean} True when finite.
    */
   function isValidYear(year) {
-    const n = Number(year);
-    return Number.isFinite(n) && n > 1000 && n < 3000;
+    return Number.isFinite(Number(year));
   }
 
   /**
-   * Builds a stable cache key for an item.
-   * @param {CatalogLikeItem} item Catalog row identity input.
-   * @returns {string} Pipe-delimited cache key derived from title/type/author/year.
+   * Builds a stable cache key from core item fields.
+   * @param {{title?:string,type?:string,author?:string,year?:number|string}} item Catalog item.
+   * @returns {string} Cache key.
    */
   function getItemKey(item) {
     return [
-      safeText(item?.title),
-      safeText(item?.type),
-      safeText(item?.author),
-      String(item?.year ?? "").trim(),
+      safeText(item && item.title),
+      safeText(item && item.type),
+      safeText(item && item.author),
+      safeText(item && item.year),
     ].join("|");
   }
 
   /**
-   * Normalizes text for fuzzy comparisons.
-   * @param {string} value Input text from title/author fields.
-   * @returns {string} Lowercase alphanumeric token string.
+   * Normalizes text for fuzzy matching.
+   * @param {string} value Text input.
+   * @returns {string} Tokenized lowercase string.
    */
   function normalizeForMatch(value) {
     return String(value || "")
@@ -87,9 +61,9 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Normalizes DOI values by stripping resolver URL prefixes.
-   * @param {string} value DOI text or DOI URL.
-   * @returns {string} Bare DOI token.
+   * Normalizes DOI values by removing resolver prefixes.
+   * @param {string} value DOI or DOI URL.
+   * @returns {string} DOI token.
    */
   function normalizeDoi(value) {
     return String(value || "")
@@ -98,19 +72,20 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Converts a DOI into a canonical DOI URL.
-   * @param {string} doi Raw DOI value.
-   * @returns {string|null} https://doi.org URL when DOI is valid; else null.
+   * Converts DOI text to canonical DOI URL.
+   * @param {string} doi DOI text.
+   * @returns {string|null} DOI URL or null.
    */
   function toDoiUrl(doi) {
     const normalized = normalizeDoi(doi);
-    return normalized ? `https://doi.org/${normalized}` : null;
+    if (!normalized) return null;
+    return `https://doi.org/${normalized}`;
   }
 
   /**
-   * Accepts only valid HTTP/HTTPS URLs.
-   * @param {string} url Candidate URL from remote metadata.
-   * @returns {string|null} Safe absolute URL or null for invalid/unsupported protocols.
+   * Returns only safe HTTP(S) URLs.
+   * @param {string} url Candidate URL.
+   * @returns {string|null} Safe URL or null.
    */
   function toSafeHttpUrl(url) {
     try {
@@ -125,127 +100,149 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Extracts a year from Crossref-style date-parts arrays.
-   * @param {any} dateParts Crossref `date-parts` value (typically nested array).
-   * @returns {number|null} Parsed year or null when unavailable.
+   * Extracts publication year from Crossref date-parts arrays.
+   * @param {any} dateParts Crossref date-parts value.
+   * @returns {number|null} Year or null.
    */
   function extractYearFromDateParts(dateParts) {
-    const year = Number(dateParts?.[0]?.[0]);
+    const year = Number(
+      dateParts && dateParts[0] && dateParts[0][0] ? dateParts[0][0] : NaN,
+    );
     return Number.isFinite(year) ? year : null;
   }
 
   /**
-   * Reads the primary title from a Crossref work.
-   * @param {any} work Crossref work object.
-   * @returns {string} Primary title text or empty string.
+   * Reads the first title from a Crossref work object.
+   * @param {any} work Crossref work.
+   * @returns {string} Title text.
    */
   function getCrossrefWorkTitle(work) {
-    if (Array.isArray(work?.title) && work.title.length > 0) {
+    if (work && Array.isArray(work.title) && work.title.length > 0) {
       return String(work.title[0] || "").trim();
     }
     return "";
   }
 
   /**
-   * Flattens Crossref author entries into plain text.
-   * @param {any} work Crossref work object.
-   * @returns {string} Joined author text used for fuzzy matching.
+   * Builds a flat author string from Crossref author entries.
+   * @param {any} work Crossref work.
+   * @returns {string} Author text for matching.
    */
   function getCrossrefAuthorText(work) {
-    if (!Array.isArray(work?.author)) return "";
+    if (!work || !Array.isArray(work.author)) return "";
 
-    return work.author
-      .map((author) => {
-        const given = String(author?.given || "").trim();
-        const family = String(author?.family || "").trim();
-        const name = String(author?.name || "").trim();
-        return `${given} ${family}`.trim() || name;
-      })
-      .filter(Boolean)
-      .join(" ");
+    const names = [];
+
+    for (let i = 0; i < work.author.length; i++) {
+      const author = work.author[i] || {};
+      const given = String(author.given || "").trim();
+      const family = String(author.family || "").trim();
+      const name = String(author.name || "").trim();
+      const full = `${given} ${family}`.trim() || name;
+      if (full) names.push(full);
+    }
+
+    return names.join(" ");
   }
 
   /**
-   * Selects the best available publication year from a Crossref work.
-   * @param {any} work Crossref work object.
-   * @returns {number|null} First usable year from issued/published/created fields.
+   * Gets the best available year from Crossref fields.
+   * @param {any} work Crossref work.
+   * @returns {number|null} Publication year or null.
    */
   function getCrossrefYear(work) {
     return (
-      extractYearFromDateParts(work?.issued?.["date-parts"]) ||
-      extractYearFromDateParts(work?.["published-print"]?.["date-parts"]) ||
-      extractYearFromDateParts(work?.["published-online"]?.["date-parts"]) ||
-      extractYearFromDateParts(work?.created?.["date-parts"]) ||
+      extractYearFromDateParts(
+        work && work.issued && work.issued["date-parts"],
+      ) ||
+      extractYearFromDateParts(
+        work &&
+          work["published-print"] &&
+          work["published-print"]["date-parts"],
+      ) ||
+      extractYearFromDateParts(
+        work &&
+          work["published-online"] &&
+          work["published-online"]["date-parts"],
+      ) ||
+      extractYearFromDateParts(
+        work && work.created && work.created["date-parts"],
+      ) ||
       null
     );
   }
 
   /**
-   * Detects Springer-family DOI prefixes.
-   * @param {string} doi DOI value to inspect.
-   * @returns {boolean} True when DOI likely belongs to Springer/BMC namespaces.
+   * Checks whether a DOI appears to be from Springer namespaces.
+   * @param {string} doi DOI value.
+   * @returns {boolean} True for Springer-like DOIs.
    */
   function isSpringerDoi(doi) {
     return /^10\.(1007|1186)\//i.test(normalizeDoi(doi));
   }
 
   /**
-   * Heuristic check for image URL-like endings.
-   * @param {string} url Candidate URL from Crossref links.
-   * @returns {boolean} True when path appears to reference an image asset.
+   * Heuristic check for image-like URL extensions.
+   * @param {string} url Candidate URL.
+   * @returns {boolean} True when URL looks like an image asset.
    */
   function isLikelyImageUrl(url) {
-    const value = String(url || "").toLowerCase();
-    return /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/.test(value);
+    return /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(String(url || ""));
   }
 
   /**
-   * Picks a likely image URL from Crossref link data.
-   * @param {any} work Crossref work object containing optional `link` entries.
-   * @returns {string|null} Best image-like URL candidate, if any.
+   * Picks a likely image URL from Crossref link entries.
+   * @param {any} work Crossref work.
+   * @returns {string|null} Image URL when available.
    */
   function pickCrossrefImageUrl(work) {
-    const links = Array.isArray(work?.link) ? work.link : [];
+    const links = work && Array.isArray(work.link) ? work.link : [];
 
-    const imageLink = links.find((link) =>
-      String(link?.["content-type"] || "")
-        .toLowerCase()
-        .startsWith("image/"),
-    );
-    if (imageLink?.URL) return String(imageLink.URL);
+    for (let i = 0; i < links.length; i++) {
+      const contentType = String(
+        links[i] && links[i]["content-type"] ? links[i]["content-type"] : "",
+      ).toLowerCase();
+      if (contentType.startsWith("image/") && links[i].URL) {
+        return String(links[i].URL);
+      }
+    }
 
-    const likelyImageLink = links.find((link) => isLikelyImageUrl(link?.URL));
-    if (likelyImageLink?.URL) return String(likelyImageLink.URL);
+    for (let i = 0; i < links.length; i++) {
+      const candidate = String(links[i] && links[i].URL ? links[i].URL : "");
+      if (isLikelyImageUrl(candidate)) {
+        return candidate;
+      }
+    }
 
     return null;
   }
 
   /**
-   * Extracts a Springer journal id from DOI text when possible.
-   * @param {string} doi DOI to parse.
-   * @returns {string|null} Journal id token used for Springer cover URL construction.
+   * Extracts Springer journal ID from DOI text.
+   * @param {string} doi DOI value.
+   * @returns {string|null} Journal ID.
    */
   function extractSpringerJournalIdFromDoi(doi) {
-    const normalized = normalizeDoi(doi);
-    const match = normalized.match(/^10\.(1007|1186)\/s(\d{4,6})(?:[-/]|$)/i);
-    return match?.[2] || null;
+    const match = normalizeDoi(doi).match(
+      /^10\.(1007|1186)\/s(\d{4,6})(?:[-/]|$)/i,
+    );
+    return match ? match[2] : null;
   }
 
   /**
-   * Extracts a Springer journal id from a landing URL.
-   * @param {string} url Article landing URL.
-   * @returns {string|null} Journal id token when URL contains `/journal/{id}`.
+   * Extracts Springer journal ID from landing page URL.
+   * @param {string} url Landing URL.
+   * @returns {string|null} Journal ID.
    */
   function extractSpringerJournalIdFromUrl(url) {
-    const value = String(url || "").trim();
-    const match = value.match(/\/journal\/(\d{4,6})(?:[/?#]|$)/i);
-    return match?.[1] || null;
+    const match = String(url || "").match(/\/journal\/(\d{4,6})(?:[/?#]|$)/i);
+    return match ? match[1] : null;
   }
 
   /**
-   * Builds candidate Springer journal cover URLs.
-   * @param {string|null} journalId Parsed Springer journal identifier.
-   * @returns {string[]} Ordered high-res and resized candidate URLs.
+   * Builds potential Springer journal cover URLs.
+   * @param {string|null} journalId Springer journal ID.
+   * @returns {string[]} Candidate cover URLs.
    */
   function buildSpringerJournalCoverCandidates(journalId) {
     if (!journalId) return [];
@@ -256,12 +253,12 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Tests whether an image URL is loadable in the browser.
-   * @param {string} imageSrc Candidate image URL to probe.
-   * @returns {Promise<boolean>} True if image loads before timeout/error.
+   * Tests whether an image URL can be loaded by the browser.
+   * @param {string} imageSrc Candidate image URL.
+   * @returns {Promise<boolean>} True when image loads successfully.
    */
   function canLoadImageUrl(imageSrc) {
-    return new Promise((resolve) => {
+    return new Promise(function (resolve) {
       const safeUrl = toSafeHttpUrl(imageSrc);
       if (!safeUrl) {
         resolve(false);
@@ -269,22 +266,26 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
       }
 
       const img = new Image();
-      let settled = false;
+      let finished = false;
 
-      const finish = (ok) => {
-        if (settled) return;
-        settled = true;
+      function done(ok) {
+        if (finished) return;
+        finished = true;
         resolve(ok);
+      }
+
+      const timeoutId = setTimeout(function () {
+        done(false);
+      }, 5000);
+
+      img.onload = function () {
+        clearTimeout(timeoutId);
+        done(true);
       };
 
-      const timeoutId = setTimeout(() => finish(false), 5000);
-      img.onload = () => {
+      img.onerror = function () {
         clearTimeout(timeoutId);
-        finish(true);
-      };
-      img.onerror = () => {
-        clearTimeout(timeoutId);
-        finish(false);
+        done(false);
       };
 
       img.src = safeUrl;
@@ -292,10 +293,10 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Attempts to resolve a Springer journal cover URL from DOI/landing data.
-   * @param {string} doi DOI candidate used to infer Springer journal id.
-   * @param {string} landingUrl Landing URL fallback for journal id extraction.
-   * @returns {Promise<string|null>} First loadable Springer cover URL or null.
+   * Resolves a working Springer journal cover URL using DOI/landing URL hints.
+   * @param {string} doi DOI value.
+   * @param {string} landingUrl Landing page URL.
+   * @returns {Promise<string|null>} First loadable cover URL or null.
    */
   async function resolveSpringerJournalCoverUrl(doi, landingUrl) {
     const journalId =
@@ -305,9 +306,10 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
     if (!journalId) return null;
 
     const candidates = buildSpringerJournalCoverCandidates(journalId);
-    for (const candidate of candidates) {
-      if (await canLoadImageUrl(candidate)) {
-        return candidate;
+
+    for (let i = 0; i < candidates.length; i++) {
+      if (await canLoadImageUrl(candidates[i])) {
+        return candidates[i];
       }
     }
 
@@ -315,55 +317,60 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Scores Crossref works by title, author, year, and content-type heuristics.
-   * @param {any} work Crossref candidate work.
-   * @param {CatalogLikeItem} item Target catalog item.
-   * @returns {number} Higher score means better candidate fit.
+   * Scores Crossref works against item title/author/year hints.
+   * @param {any} work Crossref work candidate.
+   * @param {{title?:string,author?:string,year?:number|string}} item Catalog item.
+   * @returns {number} Higher score indicates a stronger match.
    */
   function scoreCrossrefCandidate(work, item) {
-    const targetTitle = normalizeForMatch(item?.title);
-    const targetAuthor = normalizeForMatch(item?.author);
-    const targetYear = isValidYear(item?.year) ? Number(item.year) : null;
+    const targetTitle = normalizeForMatch(item && item.title);
+    const targetAuthor = normalizeForMatch(item && item.author);
+    const targetYear = isValidYear(item && item.year)
+      ? Number(item.year)
+      : null;
 
     const workTitle = normalizeForMatch(getCrossrefWorkTitle(work));
-    const workAuthors = normalizeForMatch(getCrossrefAuthorText(work));
+    const workAuthor = normalizeForMatch(getCrossrefAuthorText(work));
     const workYear = getCrossrefYear(work);
+    const workType = String(work && work.type ? work.type : "").toLowerCase();
+    const workDoi = normalizeDoi(work && work.DOI);
 
     let score = 0;
+
     if (targetTitle && workTitle === targetTitle) score += 6;
     else if (targetTitle && workTitle.includes(targetTitle)) score += 3;
 
-    if (targetAuthor && workAuthors.includes(targetAuthor)) score += 3;
+    if (targetAuthor && workAuthor.includes(targetAuthor)) score += 3;
     if (targetYear && workYear && targetYear === workYear) score += 2;
 
-    const doi = normalizeDoi(work?.DOI);
-    const workType = String(work?.type || "").toLowerCase();
-
-    if (isSpringerDoi(doi)) score += 2;
+    if (isSpringerDoi(workDoi)) score += 2;
     if (workType === "journal-article") score += 2;
     if (workType === "posted-content") score -= 2;
-    if (/^10\.21203\//i.test(doi)) score -= 2;
+    if (/^10\.21203\//i.test(workDoi)) score -= 2;
 
     return score;
   }
 
   /**
-   * Fetches, ranks, and normalizes metadata for paper-like catalog items.
-   * Queries Crossref, ranks candidates, then attempts to resolve DOI, landing URL,
-   * and a likely image URL (including Springer-specific fallbacks).
-   * @param {CatalogLikeItem} item Paper-like catalog item.
-   * @returns {Promise<PaperMetadata|null>} Normalized metadata object or null.
+   * Fetches and normalizes metadata for a paper item using Crossref.
+   * Includes DOI/landing URL and optional image URL resolution.
+   * @param {{title?:string,author?:string,year?:number|string}} item Paper item.
+   * @returns {Promise<{doi:string|null,doiUrl:string|null,landingUrl:string|null,imageUrl:string|null,source:string}|null>} Metadata object or null.
    */
   async function fetchPaperMetadata(item) {
-    const title = safeText(item?.title);
+    const title = safeText(item && item.title);
     if (!title) return null;
 
-    const author = safeText(item?.author);
-    const year = isValidYear(item?.year) ? String(item.year) : "";
-    const query = [title, author, year].filter(Boolean).join(" ");
+    const author = safeText(item && item.author);
+    const year = isValidYear(item && item.year) ? String(item.year) : "";
+
+    const queryParts = [];
+    if (title) queryParts.push(title);
+    if (author) queryParts.push(author);
+    if (year) queryParts.push(year);
 
     const params = new URLSearchParams({
-      "query.bibliographic": query,
+      "query.bibliographic": queryParts.join(" "),
       rows: "8",
       select:
         "DOI,URL,title,author,issued,published-print,published-online,created,link,type",
@@ -371,38 +378,46 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
 
     const res = await fetch(`${CROSSREF_WORKS_URL}?${params}`);
     if (!res.ok) throw new Error(`Crossref request failed (${res.status})`);
+
     const data = await res.json();
+    const works =
+      data && data.message && Array.isArray(data.message.items)
+        ? data.message.items
+        : [];
 
-    const items = Array.isArray(data?.message?.items) ? data.message.items : [];
-    if (!items.length) return null;
+    if (!works.length) return null;
 
-    const best = items
-      .map((work) => ({ work, score: scoreCrossrefCandidate(work, item) }))
-      .sort((a, b) => b.score - a.score)[0]?.work;
+    let bestWork = null;
+    let bestScore = -Infinity;
 
-    if (!best) return null;
+    for (let i = 0; i < works.length; i++) {
+      const score = scoreCrossrefCandidate(works[i], item);
+      if (score > bestScore) {
+        bestScore = score;
+        bestWork = works[i];
+      }
+    }
 
-    const doi = normalizeDoi(best?.DOI);
+    if (!bestWork) return null;
+
+    const doi = normalizeDoi(bestWork.DOI);
     const doiUrl = toSafeHttpUrl(toDoiUrl(doi));
-    const landingUrl = toSafeHttpUrl(best?.URL) || doiUrl || null;
-    let imageUrl = toSafeHttpUrl(pickCrossrefImageUrl(best));
+    const landingUrl = toSafeHttpUrl(bestWork.URL) || doiUrl || null;
+
+    let imageUrl = toSafeHttpUrl(pickCrossrefImageUrl(bestWork));
 
     if (!imageUrl) {
       imageUrl = await resolveSpringerJournalCoverUrl(doi, landingUrl);
 
-      // If the top match is not Springer (e.g., a preprint), try a Springer result.
       if (!imageUrl) {
-        const springerFallback = items
-          .map((work) => ({ work, score: scoreCrossrefCandidate(work, item) }))
-          .sort((a, b) => b.score - a.score)
-          .map((entry) => entry.work)
-          .find((work) => isSpringerDoi(work?.DOI));
-
-        if (springerFallback) {
-          imageUrl = await resolveSpringerJournalCoverUrl(
-            springerFallback?.DOI,
-            springerFallback?.URL,
-          );
+        for (let i = 0; i < works.length; i++) {
+          if (isSpringerDoi(works[i] && works[i].DOI)) {
+            imageUrl = await resolveSpringerJournalCoverUrl(
+              works[i].DOI,
+              works[i].URL,
+            );
+            if (imageUrl) break;
+          }
         }
       }
     }
@@ -419,18 +434,19 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
   }
 
   /**
-   * Retrieves previously cached metadata if available.
-   * @param {CatalogLikeItem} item Item to look up in the local metadata cache.
-   * @returns {PaperMetadata|null} Cached metadata hit or null.
+   * Gets cached metadata for an item when available.
+   * @param {{title?:string,type?:string,author?:string,year?:number|string}} item Catalog item.
+   * @returns {Object|null} Cached metadata or null.
    */
   function getCached(item) {
-    return metadataMap.get(getItemKey(item)) || null;
+    const key = getItemKey(item);
+    return metadataMap.has(key) ? metadataMap.get(key) : null;
   }
 
   /**
-   * Gets metadata for an item with deduplicated in-flight requests.
-   * @param {CatalogLikeItem} item Item requiring metadata retrieval.
-   * @returns {Promise<PaperMetadata|null>} Cached/ongoing/fetched metadata result.
+   * Gets metadata for an item with in-flight request de-duplication.
+   * @param {{title?:string,type?:string,author?:string,year?:number|string}} item Catalog item.
+   * @returns {Promise<Object|null>} Metadata object or null.
    */
   async function get(item) {
     const key = getItemKey(item);
@@ -443,64 +459,78 @@ const CATALOG_PAPER_METADATA_PROVIDER = (() => {
       return pendingMap.get(key);
     }
 
-    const pending = (async () => {
-      try {
-        const metadata = await fetchPaperMetadata(item);
-        metadataMap.set(key, metadata || null);
-        return metadata || null;
-      } catch {
+    const pending = fetchPaperMetadata(item)
+      .then(function (metadata) {
+        const value = metadata || null;
+        metadataMap.set(key, value);
+        return value;
+      })
+      .catch(function () {
         metadataMap.set(key, null);
         return null;
-      } finally {
+      })
+      .finally(function () {
         pendingMap.delete(key);
-      }
-    })();
+      });
 
     pendingMap.set(key, pending);
     return pending;
   }
 
   /**
-   * Preloads metadata in the background for paper items.
-   * Uses idle-time scheduling where supported and bounds worker count to 1..4.
-   * @param {CatalogLikeItem[]} [items=[]] Candidate catalog items.
-   * @param {{concurrency?: number}} [options={}] Optional preload tuning.
+   * Starts background metadata preloading for paper items.
+   * @param {Array<{type?:string}>} [items=[]] Candidate catalog items.
+   * @param {{concurrency?:number}} [options={}] Optional preload settings.
    * @returns {void}
    */
   function preload(items = [], options = {}) {
-    const requestedConcurrency = Number(options?.concurrency);
-    const concurrency = Number.isFinite(requestedConcurrency)
-      ? Math.min(4, Math.max(1, Math.floor(requestedConcurrency)))
+    const requested = Number(options.concurrency);
+    const concurrency = Number.isFinite(requested)
+      ? Math.min(4, Math.max(1, Math.floor(requested)))
       : 1;
 
-    const queue = (Array.isArray(items) ? items : []).filter(
-      (item) => item && normalizeType(item.type) === "paper",
-    );
+    const queue = [];
+
+    if (Array.isArray(items)) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i] && normalizeType(items[i].type) === "paper") {
+          queue.push(items[i]);
+        }
+      }
+    }
 
     if (!queue.length) return;
 
     let nextIndex = 0;
     let active = 0;
 
-    const runNext = () => {
+    function runNext() {
       while (active < concurrency && nextIndex < queue.length) {
-        const item = queue[nextIndex++];
+        const item = queue[nextIndex];
+        nextIndex += 1;
         active += 1;
 
         get(item)
-          .catch(() => null)
-          .finally(() => {
+          .catch(function () {
+            return null;
+          })
+          .finally(function () {
             active -= 1;
             runNext();
           });
       }
-    };
+    }
 
     if (
       typeof window !== "undefined" &&
       typeof window.requestIdleCallback === "function"
     ) {
-      window.requestIdleCallback(() => runNext(), { timeout: 1500 });
+      window.requestIdleCallback(
+        function () {
+          runNext();
+        },
+        { timeout: 1500 },
+      );
     } else {
       setTimeout(runNext, 0);
     }

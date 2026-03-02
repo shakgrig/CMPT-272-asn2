@@ -1,49 +1,34 @@
 "use strict";
 
-/**
- * @typedef {Object} LoadedCatalogItem
- * @property {string} [title] Human-readable item title shown in cards and modal titles.
- * @property {string} [type] Catalog type (for example: book, movie, tv, game, music, paper, etc.).
- * @property {string} [author] Primary author/creator/artist label.
- * @property {number|string} [year] Release/publication year used for display and sorting.
- * @property {string} [genre] Genre/category label displayed as a card badge.
- * @property {number|string} [rating] Numeric rating value that is formatted to one decimal place.
- * @property {string} [description] Long-form description rendered in modal details.
- * @property {HTMLElement} [cardElement] Prebuilt card node cached after async rendering.
- * @property {(params?: {type?: string}) => boolean} [matchesFilter] Predicate used by UI filtering.
- */
-
 window.addEventListener("load", init);
 
 const fileInput = document.getElementById("fileUpload");
 const typeSelect = document.getElementById("typeSelect");
 const sortSelect = document.getElementById("sortSelect");
 const resultsContainer = document.getElementById("results");
-// const results = document.getElementById("results");
 const tempHeader = document.querySelector(".temp-header");
 const tempSubHeader = document.querySelector(".temp-sub-header");
+const toastContainer = document.getElementById("liveToastContainer");
+
 const themeMenuButton = document.getElementById("themeMenuButton");
-const themeButtonIcon = themeMenuButton?.querySelector(".theme-icon");
-const themeButtonLabel = themeMenuButton?.querySelector(".theme-button-label");
-const themeButtonSr = themeMenuButton?.querySelector(".theme-button-sr");
-const themeOptionInputs = Array.from(
-  document.querySelectorAll('input[name="theme"]'),
-);
+const themeButtonIcon = themeMenuButton
+  ? themeMenuButton.querySelector(".theme-icon")
+  : null;
+const themeButtonLabel = themeMenuButton
+  ? themeMenuButton.querySelector(".theme-button-label")
+  : null;
+const themeButtonSr = themeMenuButton
+  ? themeMenuButton.querySelector(".theme-button-sr")
+  : null;
+
 const DEFAULT_PLACEHOLDER_IMG = "assets/placeholder_viewboxed_600x900.svg";
-// const STORAGE_TYPE = USE_LOCAL_STORAGE ? localStorage : sessionStorage;
+
 let loadedCatalogItems = [];
 
-const THEME_DISPLAY = {
-  "theme-light": { icon: "\u2600", label: "Light" },
-  "theme-dark": { icon: "\u263D", label: "Dark" },
-  "theme-system": { icon: "\u{1F5B3}", label: "System" },
-};
-
 /**
- * Returns the default placeholder cover source.
- * Prefers the shared placeholder helper when available, otherwise falls back
- * to the static asset path configured in this file.
- * @returns {string} Placeholder image source safe for immediate `<img src>` usage.
+ * Gets the default cover placeholder image source.
+ * Uses the shared placeholder helper when available.
+ * @returns {string} Placeholder image URL or data URI.
  */
 function getDefaultPlaceholderImg() {
   if (typeof getPlaceholderSrc === "function") {
@@ -54,22 +39,22 @@ function getDefaultPlaceholderImg() {
 }
 
 /**
- * Checks whether a source refers to one of the placeholder image variants.
- * @param {string} src Candidate URL/data URI to classify.
- * @returns {boolean} True when the source points to generated placeholder art.
+ * Checks whether a given image source is one of this app's placeholder variants.
+ * @param {string} src Image source to inspect.
+ * @returns {boolean} True when the source represents a placeholder image.
  */
 function isPlaceholderImageSource(src) {
   const value = String(src || "");
-  if (!value) return false;
+  if (value === "") return false;
   if (value.startsWith("data:image/svg+xml")) return true;
   return value.includes("placeholder_viewboxed_600x900");
 }
 
 /**
- * Creates an inline SVG placeholder element when helper support is available.
- * @param {string} [className=""] CSS classes applied to the generated SVG element.
- * @param {string} [altText="Item cover"] Accessible text announced by screen readers.
- * @returns {SVGElement|null} SVG node when helper APIs are present; otherwise null.
+ * Creates an inline SVG placeholder element for image slots.
+ * @param {string} [className=""] CSS classes for the generated SVG.
+ * @param {string} [altText="Item cover"] Accessible label for screen readers.
+ * @returns {SVGElement|null} SVG placeholder element, or null when helper is unavailable.
  */
 function createInlinePlaceholderElement(
   className = "",
@@ -85,73 +70,17 @@ function createInlinePlaceholderElement(
   return svg;
 }
 
-// function getDefaultPlaceholderImg() {
-//   const svg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="300 150 600 900" preserveAspectRatio="xMidYMid meet"><rect x="300" y="150" width="600" height="900" fill="var(--placeholder-bg)" rx="3"/><g opacity=".5"><g opacity=".5"><path fill="var(--placeholder-outer)" d="M600.709 736.5c-75.454 0-136.621-61.167-136.621-136.62 0-75.454 61.167-136.621 136.621-136.621 75.453 0 136.62 61.167 136.62 136.621 0 75.453-61.167 136.62-136.62 136.62Z"/><path stroke="var(--placeholder-stroke)" stroke-width="2.418" d="M600.709 736.5c-75.454 0-136.621-61.167-136.621-136.62 0-75.454 61.167-136.621 136.621-136.621 75.453 0 136.62 61.167 136.62 136.621 0 75.453-61.167 136.62-136.62 136.62Z"/></g><path stroke="url(#a)" stroke-width="2.418" d="M0-1.209h553.581" transform="scale(1 -1) rotate(45 1163.11 91.165)"/><path stroke="url(#b)" stroke-width="2.418" d="M404.846 598.671h391.726"/><path stroke="url(#c)" stroke-width="2.418" d="M599.5 795.742V404.017"/><path stroke="url(#d)" stroke-width="2.418" d="m795.717 796.597-391.441-391.44"/><path fill="var(--placeholder-inner)" d="M600.709 656.704c-31.384 0-56.825-25.441-56.825-56.824 0-31.384 25.441-56.825 56.825-56.825 31.383 0 56.824 25.441 56.824 56.825 0 31.383-25.441 56.824-56.824 56.824Z"/><g clip-path="url(#e)"><path fill="var(--placeholder-icon)" fill-rule="evenodd" d="M616.426 586.58h-31.434v16.176l3.553-3.554.531-.531h9.068l.074-.074 8.463-8.463h2.565l7.18 7.181V586.58Zm-15.715 14.654 3.698 3.699 1.283 1.282-2.565 2.565-1.282-1.283-5.2-5.199h-6.066l-5.514 5.514-.073.073v2.876a2.418 2.418 0 0 0 2.418 2.418h26.598a2.418 2.418 0 0 0 2.418-2.418v-8.317l-8.463-8.463-7.181 7.181-.071.072Zm-19.347 5.442v4.085a6.045 6.045 0 0 0 6.046 6.045h26.598a6.044 6.044 0 0 0 6.045-6.045v-7.108l1.356-1.355-1.282-1.283-.074-.073v-17.989h-38.689v23.43l-.146.146.146.147Z" clip-rule="evenodd"/></g><path stroke="var(--placeholder-stroke)" stroke-width="2.418" d="M600.709 656.704c-31.384 0-56.825-25.441-56.825-56.824 0-31.384 25.441-56.825 56.825-56.825 31.383 0 56.824 25.441 56.824 56.825 0 31.383-25.441 56.824-56.824 56.824Z"/></g><defs><linearGradient id="a" x1="554.061" x2="-.48" y1=".083" y2=".087" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><linearGradient id="b" x1="796.912" x2="404.507" y1="599.963" y2="599.965" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><linearGradient id="c" x1="600.792" x2="600.794" y1="403.677" y2="796.082" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><linearGradient id="d" x1="404.85" x2="796.972" y1="403.903" y2="796.02" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><clipPath id="e"><path fill="var(--placeholder-icon)" d="M581.364 580.535h38.689v38.689h-38.689z"/></clipPath></defs></svg>`;
-//   const blob = new Blob([svg], { type: "image/svg+xml" });
-//   return URL.createObjectURL(blob); // returns a temporary object URL for img.src
-// }
-
-// function preloadCovers(items) {
-//   items.forEach((item) => {
-//     getCoverImage(item).catch(() => {});
-//   });
-// }
-//
-// function saveCoverToLocalStorage(item, src) {
-//   try {
-//     // STORAGE_TYPE.setItem("cover_" + item.getCacheKey(), src);
-//     STORAGE_TYPE.setItem("cover_" + item.getCacheKey(), src);
-//   } catch {
-//     // ignore quota errors
-//   }
-// }
-//
-// function getCoverFromLocalStorage(item) {
-//   // return STORAGE_TYPE.getItem("cover_" + item.getCacheKey());
-//   return STORAGE_TYPE.getItem("cover_" + item.getCacheKey());
-// }
-//
-// // Simple async function to get a cover
-// async function getCoverImage(item) {
-//   const key = item.getCacheKey();
-//   if (CatalogItem.coverResolvedMap.has(key))
-//     return CatalogItem.coverResolvedMap.get(key);
-//
-//   let src = getCoverFromLocalStorage(item);
-//   if (src) {
-//     CatalogItem.coverResolvedMap.set(key, src);
-//     return src;
-//   }
-//
-//   try {
-//     if (typeof getCover === "function") src = await getCover(item);
-//     if (!src && typeof getFallbackCoverForType === "function")
-//       src = await getFallbackCoverForType(item);
-//   } catch {
-//     src = null;
-//   }
-//
-//   if (!src) src = getDefaultPlaceholderImg();
-//
-//   CatalogItem.coverResolvedMap.set(key, src);
-//   saveCoverToLocalStorage(item, src);
-//
-//   return src;
-// }
-
 /**
- * Initializes page behavior and CSV upload handling.
- * Registers filter/sort listeners, validates uploaded CSV content, parses rows,
- * materializes `CatalogItem` cards asynchronously, and then triggers first render.
+ * Initializes page interactions and upload workflow.
+ * Wires UI events, parses CSV input, renders cards, and triggers initial preloading.
  * @returns {void}
  */
 function init() {
   footer();
   initThemeController();
-  // clearLocalStorage();
 
-  typeSelect?.addEventListener("change", applyFiltersAndSort);
-  sortSelect?.addEventListener("change", applyFiltersAndSort);
+  if (typeSelect) typeSelect.addEventListener("change", applyFiltersAndSort);
+  if (sortSelect) sortSelect.addEventListener("change", applyFiltersAndSort);
 
   if (!fileInput) {
     console.error("fileInput element not found!");
@@ -162,32 +91,20 @@ function init() {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.type.includes("text") && !file.name.endsWith(".csv")) {
-      appendAlert("Please upload a valid text or CSV file.", "danger");
-      return;
-    }
-
     const reader = new FileReader();
+
     reader.onload = async function (e) {
       try {
-        const parsedRows = e.target.result
-          .split(/\r?\n/)
-          .filter((line) => line.trim() !== "")
-          .map((line) => line.split(",").map((cell) => cell.trim()));
+        const parsedRows = parseCsvText(String(e.target.result || ""));
 
-        const header = parsedRows[0]?.map((cell) => cell.toLowerCase());
-        const hasExpectedHeader =
-          Array.isArray(header) &&
-          header[0] === "title" &&
-          header[1] === "type" &&
-          header[2] === "author" &&
-          header[3] === "year" &&
-          header[4] === "genre" &&
-          header[5] === "rating" &&
-          header[6] === "description";
+        // Assume the CSV has the expected header in row 0.
+        const rows = parsedRows.slice(1);
 
-        const rows = hasExpectedHeader ? parsedRows.slice(1) : parsedRows;
-        const catalogItems = rows.map((row) => new CatalogItem(...row));
+        const catalogItems = [];
+        for (let i = 0; i < rows.length; i++) {
+          catalogItems.push(new CatalogItem(...rows[i]));
+        }
+
         loadedCatalogItems = catalogItems;
         window.LAST_CATALOG_ITEMS = catalogItems;
 
@@ -195,18 +112,14 @@ function init() {
         if (typeSelect) typeSelect.value = "all";
         if (sortSelect) sortSelect.selectedIndex = 0;
 
-        for (const item of catalogItems) {
-          item.cardElement = await item.toCard();
+        for (let i = 0; i < catalogItems.length; i++) {
+          catalogItems[i].cardElement = await catalogItems[i].toCard();
         }
-        // catalogItems.forEach((item) => {
-        //   results.appendChild(item.toCard());
-        // });
 
         applyFiltersAndSort();
-        hideTempHeaders(catalogItems);
-        // preloadCovers(catalogItems);
+        hideTempHeaders(catalogItems.length);
 
-        requestAnimationFrame(() => {
+        requestAnimationFrame(function () {
           CatalogItem.preloadCoverImagesInBackground(catalogItems, {
             concurrency: 1,
           });
@@ -218,36 +131,62 @@ function init() {
         appendAlert(`Error parsing file: ${error}`, "danger");
       }
     };
+
     reader.readAsText(file);
   });
 }
 
 /**
- * Sets up theme menu events and initial state.
- * Wires radio inputs to update button icon/label and closes the dropdown after selection.
+ * Parses CSV text into a 2D array of trimmed cells.
+ * Empty lines are ignored.
+ * @param {string} csvText Raw CSV content.
+ * @returns {string[][]} Parsed rows.
+ */
+function parseCsvText(csvText) {
+  const lines = csvText.split(/\r?\n/);
+  const rows = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === "") continue;
+
+    const cells = line.split(",");
+    for (let j = 0; j < cells.length; j++) {
+      cells[j] = cells[j].trim();
+    }
+
+    rows.push(cells);
+  }
+
+  return rows;
+}
+
+/**
+ * Sets up the theme dropdown control and change listeners.
  * @returns {void}
  */
 function initThemeController() {
-  if (!themeOptionInputs.length || !themeMenuButton) return;
+  if (!themeMenuButton) return;
 
-  themeOptionInputs.forEach((input) => {
-    input.addEventListener("change", () => {
-      if (!input.checked) return;
+  const themeInputs = document.querySelectorAll('input[name="theme"]');
+
+  for (let i = 0; i < themeInputs.length; i++) {
+    themeInputs[i].addEventListener("change", function () {
       syncThemeButtonState();
       closeThemeDropdown();
     });
-  });
+  }
 
   syncThemeButtonState();
 }
 
 /**
- * Closes the Bootstrap theme dropdown if available.
- * Safely no-ops when Bootstrap JS is not loaded.
+ * Closes the Bootstrap theme dropdown when it is open.
  * @returns {void}
  */
 function closeThemeDropdown() {
-  if (!themeMenuButton || !window.bootstrap?.Dropdown) return;
+  if (!themeMenuButton) return;
+  if (!window.bootstrap || !window.bootstrap.Dropdown) return;
 
   const dropdown =
     window.bootstrap.Dropdown.getOrCreateInstance(themeMenuButton);
@@ -255,34 +194,39 @@ function closeThemeDropdown() {
 }
 
 /**
- * Synchronizes the theme button icon/label with the selected radio input.
- * Also updates accessible screen-reader text and tooltip title.
+ * Syncs theme button icon/label text with the selected radio option.
  * @returns {void}
  */
 function syncThemeButtonState() {
   if (!themeMenuButton) return;
 
-  const selectedInput =
-    themeOptionInputs.find((input) => input.checked) ||
+  const selected =
+    document.querySelector('input[name="theme"]:checked') ||
     document.getElementById("theme-system");
-  const key = selectedInput?.id || "theme-system";
-  const display = THEME_DISPLAY[key] || THEME_DISPLAY["theme-system"];
 
-  if (themeButtonIcon) themeButtonIcon.textContent = display.icon;
-  if (themeButtonLabel) themeButtonLabel.textContent = display.label;
-  if (themeButtonSr) {
-    themeButtonSr.textContent = `Theme menu, current: ${display.label}`;
+  let icon = "🖳";
+  let label = "System";
+
+  if (selected && selected.id === "theme-light") {
+    icon = "☀";
+    label = "Light";
+  } else if (selected && selected.id === "theme-dark") {
+    icon = "☽";
+    label = "Dark";
   }
 
-  themeMenuButton.title = `Theme: ${display.label}`;
+  if (themeButtonIcon) themeButtonIcon.textContent = icon;
+  if (themeButtonLabel) themeButtonLabel.textContent = label;
+  if (themeButtonSr)
+    themeButtonSr.textContent = `Theme menu, current: ${label}`;
+
+  themeMenuButton.title = `Theme: ${label}`;
 }
 
-const toastContainer = document.getElementById("liveToastContainer");
-
 /**
- * Shows a Bootstrap toast alert in the live toast region.
- * @param {string} message Text content displayed inside the toast body.
- * @param {"success"|"danger"|"warning"|"info"|string} type Semantic style key. Unknown values are normalized to "info".
+ * Shows a Bootstrap toast message in the live toast container.
+ * @param {string} message Message body shown to the user.
+ * @param {"success"|"danger"|"warning"|"info"|string} type Visual toast type.
  * @returns {void}
  */
 function appendAlert(message, type) {
@@ -299,6 +243,7 @@ function appendAlert(message, type) {
   toastEl.setAttribute("role", isError ? "alert" : "status");
   toastEl.setAttribute("aria-live", isError ? "assertive" : "polite");
   toastEl.setAttribute("aria-atomic", "true");
+
   toastEl.innerHTML = `
     <section class="d-flex">
       <p class="toast-body mb-0"></p>
@@ -311,7 +256,7 @@ function appendAlert(message, type) {
 
   toastContainer.appendChild(toastEl);
 
-  toastEl.addEventListener("hidden.bs.toast", () => {
+  toastEl.addEventListener("hidden.bs.toast", function () {
     toastEl.remove();
   });
 
@@ -320,34 +265,37 @@ function appendAlert(message, type) {
     autohide: true,
     delay: 3500,
   });
-  instance.show();
-};
 
-/**
- * Shows/hides empty-state header text based on rendered catalog size.
- * @param {LoadedCatalogItem[]} catalogItems Current result set after filter/sort.
- * @returns {void}
- */
-function hideTempHeaders(catalogItems) {
-  tempHeader.style.display = catalogItems.length ? "none" : "block";
-  tempSubHeader.style.display = catalogItems.length ? "none" : "block";
+  instance.show();
 }
 
 /**
- * Populates the type filter dropdown from available item types.
- * Preserves the previous selection when it still exists in the rebuilt option list.
- * @param {LoadedCatalogItem[]} items Source items used to derive unique type values.
+ * Toggles the empty-state header/subheader visibility.
+ * @param {number} itemCount Number of currently visible items.
+ * @returns {void}
+ */
+function hideTempHeaders(itemCount) {
+  const display = itemCount > 0 ? "none" : "block";
+  if (tempHeader) tempHeader.style.display = display;
+  if (tempSubHeader) tempSubHeader.style.display = display;
+}
+
+/**
+ * Builds and renders type filter options from loaded catalog items.
+ * @param {Array<{type:string}>} items Parsed catalog items.
  * @returns {void}
  */
 function populateTypeOptions(items) {
   if (!typeSelect) return;
 
-  const previousType = uiNormalizeType(typeSelect.value || "all");
-  const uniqueTypes = [
-    ...new Set(items.map((item) => uiNormalizeType(item.type))),
-  ]
-    .filter(Boolean)
-    .sort();
+  const typeMap = {};
+
+  for (let i = 0; i < items.length; i++) {
+    const value = uiNormalizeType(items[i].type);
+    if (value) typeMap[value] = true;
+  }
+
+  const uniqueTypes = Object.keys(typeMap).sort();
 
   typeSelect.innerHTML = "";
 
@@ -356,76 +304,83 @@ function populateTypeOptions(items) {
   allOption.textContent = "All";
   typeSelect.appendChild(allOption);
 
-  for (const type of uniqueTypes) {
+  for (let i = 0; i < uniqueTypes.length; i++) {
     const option = document.createElement("option");
-    option.value = type;
-    option.textContent = type;
+    option.value = uniqueTypes[i];
+    option.textContent = uniqueTypes[i];
     typeSelect.appendChild(option);
   }
-
-  typeSelect.value = uniqueTypes.includes(previousType) ? previousType : "all";
 }
 
 /**
- * Compares two catalog items using the selected sort key.
- * Numeric keys (`year`, `rating`) are compared numerically; all others use
- * locale-aware, case-insensitive string comparison.
- * @param {LoadedCatalogItem} a Left-hand item in sort comparator.
- * @param {LoadedCatalogItem} b Right-hand item in sort comparator.
- * @param {string} sortKey Active normalized key from the sort dropdown.
- * @returns {number} Negative when `a < b`, positive when `a > b`, otherwise 0.
+ * Compares two items for sorting based on a selected key.
+ * Numeric sort is used for year/rating, lexical sort for other keys.
+ * @param {Object} a Left item.
+ * @param {Object} b Right item.
+ * @param {string} sortKey Active sort field.
+ * @returns {number} Negative/zero/positive comparator value.
  */
 function compareCatalogItems(a, b, sortKey) {
   if (sortKey === "year" || sortKey === "rating") {
-    const aNum = Number(a?.[sortKey]);
-    const bNum = Number(b?.[sortKey]);
-    const aValue = Number.isFinite(aNum) ? aNum : Number.NEGATIVE_INFINITY;
-    const bValue = Number.isFinite(bNum) ? bNum : Number.NEGATIVE_INFINITY;
-    return aValue - bValue;
+    return Number(a[sortKey]) - Number(b[sortKey]);
   }
 
-  const aValue = String(a?.[sortKey] ?? "");
-  const bValue = String(b?.[sortKey] ?? "");
+  const aValue = String(a[sortKey] || "");
+  const bValue = String(b[sortKey] || "");
   return aValue.localeCompare(bValue, undefined, { sensitivity: "base" });
 }
 
 /**
- * Applies active type filter and sort options, then re-renders results.
- * Uses `matchesFilter` for type checks and a title-based tie-breaker for stable output.
+ * Applies the current type filter and sort setting, then updates the card grid.
  * @returns {void}
  */
 function applyFiltersAndSort() {
   if (!resultsContainer) return;
 
-  const selectedType = uiNormalizeType(typeSelect?.value || "all");
-  const selectedSort = uiNormalizeType(sortSelect?.value || "none");
+  const selectedType = uiNormalizeType(typeSelect ? typeSelect.value : "all");
+  const selectedSort = uiNormalizeType(sortSelect ? sortSelect.value : "none");
 
-  const visibleItems = loadedCatalogItems.filter((item) =>
-    item.matchesFilter({ type: selectedType }),
-  );
+  const visibleItems = [];
+
+  for (let i = 0; i < loadedCatalogItems.length; i++) {
+    const item = loadedCatalogItems[i];
+
+    if (selectedType === "all") {
+      visibleItems.push(item);
+    } else {
+      const itemType = uiNormalizeType(item.type);
+      if (itemType === selectedType) {
+        visibleItems.push(item);
+      }
+    }
+  }
 
   if (selectedSort !== "none") {
-    visibleItems.sort((a, b) => {
+    visibleItems.sort(function (a, b) {
       const result = compareCatalogItems(a, b, selectedSort);
       if (result !== 0) return result;
-      return String(a.title).localeCompare(String(b.title), undefined, {
-        sensitivity: "base",
-      });
+
+      const aTitle = String(a.title || "");
+      const bTitle = String(b.title || "");
+      return aTitle.localeCompare(bTitle, undefined, { sensitivity: "base" });
     });
   }
 
   resultsContainer.innerHTML = "";
-  for (const item of visibleItems) {
-    if (item.cardElement) {
-      resultsContainer.appendChild(item.cardElement);
+
+  for (let i = 0; i < visibleItems.length; i++) {
+    if (visibleItems[i].cardElement) {
+      resultsContainer.appendChild(visibleItems[i].cardElement);
     }
   }
+
+  hideTempHeaders(visibleItems.length);
 }
 
 /**
- * Normalizes a UI type value for stable matching.
- * @param {string} type Raw string from dropdowns or item fields.
- * @returns {string} Lowercased, trimmed token suitable for equality checks.
+ * Normalizes a type value for matching and map keys.
+ * @param {string} type Raw type value.
+ * @returns {string} Lowercase trimmed type.
  */
 function uiNormalizeType(type) {
   return String(type || "")
@@ -434,31 +389,27 @@ function uiNormalizeType(type) {
 }
 
 /**
- * Parses and formats ratings to one decimal place.
- * @param {number|string|null|undefined} value Candidate rating value from parsed CSV.
- * @returns {string|null} Formatted numeric string (for example `"4.5"`) or null when invalid.
+ * Formats a rating value to one decimal place.
+ * @param {number|string} value Rating input.
+ * @returns {string} Formatted rating text (for example, "4.5").
  */
 function uiSafeRating(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const n = Number(value);
-  if (!Number.isFinite(n)) return null;
-  return n.toFixed(1);
+  return Number(value).toFixed(1);
 }
 
 /**
- * Validates year values for display.
- * @param {number|string|null|undefined} year Candidate year value.
- * @returns {boolean} True when value is finite and within a human-expected range.
+ * Checks whether a year value can be parsed as a finite number.
+ * @param {number|string} year Year candidate.
+ * @returns {boolean} True when the year is numeric.
  */
 function uiIsValidYear(year) {
-  const n = Number(year);
-  return Number.isFinite(n) && n > 1000 && n < 3000;
+  return Number.isFinite(Number(year));
 }
 
 /**
- * Escapes HTML special characters for safe text insertion.
- * @param {string} text Untrusted text that will be inserted into `innerHTML`.
- * @returns {string} Escaped text safe for HTML interpolation.
+ * Escapes HTML-sensitive characters for safe interpolation into innerHTML.
+ * @param {string} text Raw text.
+ * @returns {string} Escaped HTML string.
  */
 function uiEscapeHtml(text) {
   return String(text || "")
@@ -470,9 +421,9 @@ function uiEscapeHtml(text) {
 }
 
 /**
- * Returns a sanitized absolute HTTP/HTTPS URL.
- * @param {string} url Candidate URL from item metadata.
- * @returns {string|null} Absolute URL string when protocol is safe; otherwise null.
+ * Validates and normalizes an HTTP/HTTPS URL.
+ * @param {string} url Candidate URL.
+ * @returns {string|null} Safe absolute URL, or null if invalid/unsupported.
  */
 function uiToSafeHttpUrl(url) {
   try {
@@ -487,11 +438,9 @@ function uiToSafeHttpUrl(url) {
 }
 
 /**
- * Converts a JSON string into syntax-highlighted HTML spans.
- * Produces escaped HTML and wraps keys/strings/booleans/numbers with classed spans
- * used by the modal raw-data viewer.
- * @param {string} json Raw JSON string to highlight.
- * @returns {string} HTML fragment with semantic span wrappers.
+ * Adds lightweight syntax highlighting spans to JSON text.
+ * @param {string} json JSON string to highlight.
+ * @returns {string} HTML markup with span classes for keys/values.
  */
 function highlightJSON(json) {
   const escaped = json
@@ -501,28 +450,31 @@ function highlightJSON(json) {
 
   return escaped.replace(
     /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?/g,
-    (match, string, isKey, literal) => {
+    function (match, string, isKey, literal) {
       if (string) {
-        return isKey
-          ? `<span class="json-key">${string}</span>${isKey}`
-          : `<span class="json-string">${string}</span>`;
+        if (isKey) {
+          return `<span class="json-key">${string}</span>${isKey}`;
+        }
+        return `<span class="json-string">${string}</span>`;
       }
+
       if (literal) {
         return `<span class="json-boolean">${literal}</span>`;
       }
+
       return `<span class="json-number">${match}</span>`;
     },
   );
 }
 
 /**
- * Updates the footer's last-update text.
- * Uses a fixed assignment date (not runtime "now") for deterministic display.
+ * Writes the assignment footer "last updated" text.
  * @returns {void}
  */
 function footer() {
   const lastUpdate = new Date(2026, 1, 20);
+  const el = document.getElementById("last-update");
+  if (!el) return;
 
-  document.getElementById("last-update").textContent =
-    `Last Update: ${lastUpdate.toLocaleString("en-CA", { dateStyle: "long" })}`;
+  el.textContent = `Last Update: ${lastUpdate.toLocaleString("en-CA", { dateStyle: "long" })}`;
 }
