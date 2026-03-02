@@ -637,6 +637,22 @@
   color: lightgray;
 }
 
+/* Moved from style.css (unused Assignment 1 selector mappings) */
+.product-title,
+.product-name,
+.product-gallery {
+  color: var(--primary-color);
+}
+
+.product-card,
+.gallery-card {
+  background-color: var(--light-bg);
+}
+
+.product-name:hover {
+  color: var(--accent-color);
+}
+
 /* API-era indicator for cards with fetched modal images (unused now) */
 .catalog-item-card--has-modal-image::after {
   content: "";

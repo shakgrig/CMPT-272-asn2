@@ -56,67 +56,6 @@ function getPlaceholderSrc() {
 }
 
 /**
- * Returns a placeholder cover for all items.
- * External API lookups are intentionally disabled.
- * @returns {Promise<string>} Placeholder source URL/data URI.
- */
-async function getCover() {
-  if (typeof getPlaceholderSrc === "function") {
-    return getPlaceholderSrc();
-  }
-
-  return DEFAULT_PLACEHOLDER_IMG;
-}
-
-/**
- * Returns fallback placeholder source.
- * @returns {Promise<string>} Placeholder source URL/data URI.
- */
-async function getFallbackCoverForType() {
-  if (typeof getPlaceholderSrc === "function") {
-    return getPlaceholderSrc();
-  }
-
-  return DEFAULT_PLACEHOLDER_IMG;
-}
-
-/**
- * Local-only paper metadata provider.
- * External metadata lookup is intentionally disabled.
- */
-const CATALOG_PAPER_METADATA_PROVIDER = (function () {
-  /**
-   * Reads cached metadata for an item.
-   * @returns {null} Always null (metadata disabled).
-   */
-  function getCached() {
-    return null;
-  }
-
-  /**
-   * Gets metadata for an item.
-   * @returns {Promise<null>} Always resolves to null.
-   */
-  async function get() {
-    return null;
-  }
-
-  /**
-   * Background preload hook.
-   * @returns {void}
-   */
-  function preload() {
-    // Intentionally empty.
-  }
-
-  return {
-    getCached,
-    get,
-    preload,
-  };
-})();
-
-/**
  * Gets the default cover placeholder image source.
  * Uses the shared placeholder helper when available.
  * @returns {string} Placeholder image URL or data URI.
@@ -163,7 +102,7 @@ function createInlinePlaceholderElement(
 
 /**
  * Initializes page interactions and upload workflow.
- * Wires UI events, parses CSV input, renders cards, and triggers initial preloading.
+ * Wires UI events, parses CSV input, and renders cards.
  * @returns {void}
  */
 function init() {
@@ -214,12 +153,6 @@ function init() {
 
         applyFiltersAndSort();
         hideTempHeaders(catalogItems.length);
-
-        requestAnimationFrame(function () {
-          CatalogItem.preloadCoverImagesInBackground(catalogItems, {
-            concurrency: 1,
-          });
-        });
 
         appendAlert("Successfully loaded CSV", "success");
       } catch (error) {
@@ -441,13 +374,8 @@ function applyFiltersAndSort() {
   for (let i = 0; i < loadedCatalogItems.length; i++) {
     const item = loadedCatalogItems[i];
 
-    if (selectedType === "all") {
+    if (item.matchesFilter({ type: selectedType })) {
       visibleItems.push(item);
-    } else {
-      const itemType = uiNormalizeType(item.type);
-      if (itemType === selectedType) {
-        visibleItems.push(item);
-      }
     }
   }
 
@@ -514,23 +442,6 @@ function uiEscapeHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#039;");
-}
-
-/**
- * Validates and normalizes an HTTP/HTTPS URL.
- * @param {string} url Candidate URL.
- * @returns {string|null} Safe absolute URL, or null if invalid/unsupported.
- */
-function uiToSafeHttpUrl(url) {
-  try {
-    const parsed = new URL(String(url || ""));
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
-      return parsed.href;
-    }
-    return null;
-  } catch {
-    return null;
-  }
 }
 
 /**

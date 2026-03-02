@@ -68,7 +68,6 @@
   --dark-badge-low: color-mix(in srgb, var(--bs-danger) 70%, var(--bs-warning) 30%);
   --dark-badge-mid: var(--bs-warning);
   --dark-badge-good: color-mix(in srgb, var(--bs-success) 70%, var(--bs-warning) 30%);
-  ;
   --dark-badge-excellent: var(--bs-success);
 }
 
@@ -178,9 +177,6 @@
  * Theme Mappings 
  */
 body,
-.product-title,
-.product-name,
-.product-gallery,
 .card-header,
 .card-title,
 .form-label,
@@ -205,8 +201,6 @@ body,
   color: white;
 }
 
-.product-card,
-.gallery-card,
 .card,
 .modal-content,
 .theme-selector,
@@ -225,8 +219,7 @@ fieldset legend,
   color: var(--text-color);
 }
 
-a,
-.product-name:hover {
+a {
   color: var(--accent-color);
 }
 
@@ -634,7 +627,9 @@ a:hover {
   margin: 40px 0;
 }
 
-.generated-cards>p {
+.generated-cards>.temp-header,
+.generated-cards>.temp-sub-header {
+  width: 100%;
   text-align: center;
 }
 

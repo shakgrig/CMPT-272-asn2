@@ -1,11 +1,10 @@
-// class used to store parsed rows and provide helper methods
+"use strict";
+
 /**
  * Represents one parsed catalog row and provides rendering/query helpers.
  */
 class CatalogItem {
   static DETAIL_MODAL_ID = "catalogItemDetailModal";
-  static coverPreloadMap = new Map();
-  static coverResolvedMap = new Map();
 
   /**
    * Creates a normalized catalog item from one parsed CSV row.
@@ -48,45 +47,6 @@ class CatalogItem {
     this.rating = hasExplicitRating ? parsedRating : 0;
     this.hasExplicitRating = hasExplicitRating;
     this.description = description;
-  }
-
-  /**
-   * Preloads an image into browser cache.
-   * @param {string} imageSrc URL/data URI to request and warm in the browser cache.
-   * @returns {Promise<void>} Resolves on load or error (never rejects).
-   */
-  static preloadImageToBrowserCache(imageSrc) {
-    return new Promise((resolve) => {
-      if (!imageSrc) {
-        resolve();
-        return;
-      }
-
-      const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
-      img.src = imageSrc;
-    });
-  }
-
-  /**
-   * Resolves and caches a cover image source for an item.
-   * De-duplicates concurrent lookups and avoids persisting placeholder snapshots.
-   * @param {CatalogItem} item Catalog item requiring a resolved cover source.
-   * @returns {Promise<string>} Final image source (real cover when possible; placeholder otherwise).
-   */
-  static async getPreloadedCover(item) {
-    return getDefaultPlaceholderImg();
-  }
-
-  /**
-   * Starts cover preloading during idle time with bounded concurrency.
-   * @param {CatalogItem[]} [items=[]] Items considered for background cover warming.
-   * @param {{concurrency?: number}} [options={}] Optional worker cap (`1..6`, default `2`).
-   * @returns {void}
-   */
-  static preloadCoverImagesInBackground(items = [], options = {}) {
-    // Intentionally disabled: API image preloading removed.
   }
 
   /**
@@ -221,14 +181,10 @@ class CatalogItem {
       .map((row) => {
         const label = uiEscapeHtml(row.label);
         const value = uiEscapeHtml(row.value);
-        const href = uiToSafeHttpUrl(row.href);
-        const renderedValue = href
-          ? `<a href="${uiEscapeHtml(href)}" target="_blank" rel="noopener noreferrer">${value}</a>`
-          : value;
 
         return `
                     <dt class="modal-label col-5">${label}</dt>
-                    <dd class="modal-value col-7">${renderedValue}</dd>
+                    <dd class="modal-value col-7">${value}</dd>
                 `;
       })
       .join("");
@@ -268,13 +224,12 @@ class CatalogItem {
 
   /**
    * Opens the item detail modal and renders all sections.
-   * @param {CatalogItem} item Item to display and track as the current modal context.
-   * @param {string|null|undefined} imageSrc Initial image source used before async upgrades.
+   * @param {CatalogItem} item Item to display in the modal.
+   * @param {string|null|undefined} imageSrc Initial image source for the modal media.
    * @returns {void}
    */
   static openModal(item, imageSrc) {
     const modal = CatalogItem.ensureDetailModal();
-    modal.dataset.currentItemKey = item.getCacheKey();
 
     const modalTitle = modal.querySelector(
       `#${CatalogItem.DETAIL_MODAL_ID}Label`,
@@ -290,43 +245,6 @@ class CatalogItem {
     if (window.bootstrap?.Modal) {
       window.bootstrap.Modal.getOrCreateInstance(modal).show();
     }
-  }
-
-  /**
-   * Updates modal image only if the modal is showing the same item.
-   * Prevents race-condition overwrites when a previous async cover resolves late.
-   * @param {CatalogItem} item Item that initiated the async image request.
-   * @param {string|null|undefined} imageSrc Newly resolved source candidate.
-   * @returns {void}
-   */
-  static updateModalImageIfCurrent(item, imageSrc) {
-    const modal = document.getElementById(CatalogItem.DETAIL_MODAL_ID);
-    if (!modal) return;
-    if (modal.dataset.currentItemKey !== item.getCacheKey()) return;
-    CatalogItem.setModalImage(
-      modal,
-      item,
-      imageSrc || getDefaultPlaceholderImg(),
-    );
-  }
-
-  // this was mostly just for testing and debugging
-  /**
-   * Returns a debug-friendly multiline representation of this item.
-   * @returns {string}
-   */
-  toLocalString() {
-    return `Title: ${this.title}\nType: ${this.type}\nAuthor: ${this.author}\nYear: ${this.year}\nGenre: ${this.genre}\nRating: ${this.rating}\nDescription: ${this.description}`;
-  }
-
-  /**
-   * Returns a stable cache key for this item.
-   * @returns {string}
-   */
-  getCacheKey() {
-    return [this.title, this.type, this.author, String(this.year ?? "")].join(
-      "|",
-    );
   }
 
   /**
@@ -358,15 +276,6 @@ class CatalogItem {
     if (value < 3) return "rating-badge-mid";
     if (value < 4) return "rating-badge-good";
     return "rating-badge-excellent";
-  }
-
-  /**
-   * Resolves this item's cover image source.
-   * API image lookups are disabled, so this always returns the placeholder.
-   * @returns {Promise<string>} Placeholder image source.
-   */
-  async resolveCoverImage() {
-    return getDefaultPlaceholderImg();
   }
 
   /**
