@@ -76,36 +76,7 @@ class CatalogItem {
    * @returns {Promise<string>} Final image source (real cover when possible; placeholder otherwise).
    */
   static async getPreloadedCover(item) {
-    const key = item.getCacheKey();
-    if (CatalogItem.coverResolvedMap.has(key)) {
-      return CatalogItem.coverResolvedMap.get(key);
-    }
-
-    if (CatalogItem.coverPreloadMap.has(key)) {
-      return CatalogItem.coverPreloadMap.get(key);
-    }
-
-    const pending = (async () => {
-      try {
-        const source = await item.resolveCoverImage();
-        if (!source || isPlaceholderImageSource(source)) {
-          // Placeholder data URIs are snapshots of current CSS values.
-          // Do not cache them long-term; regenerate on each use.
-          return getDefaultPlaceholderImg();
-        }
-
-        await CatalogItem.preloadImageToBrowserCache(source);
-        CatalogItem.coverResolvedMap.set(key, source);
-        return source;
-      } catch {
-        return getDefaultPlaceholderImg();
-      } finally {
-        CatalogItem.coverPreloadMap.delete(key);
-      }
-    })();
-
-    CatalogItem.coverPreloadMap.set(key, pending);
-    return pending;
+    return getDefaultPlaceholderImg();
   }
 
   /**
@@ -115,96 +86,7 @@ class CatalogItem {
    * @returns {void}
    */
   static preloadCoverImagesInBackground(items = [], options = {}) {
-    if (!Array.isArray(items) || items.length === 0) return;
-
-    const requestedConcurrency = Number(options?.concurrency);
-    const concurrency = Number.isFinite(requestedConcurrency)
-      ? Math.min(6, Math.max(1, Math.floor(requestedConcurrency)))
-      : 2;
-
-    const queue = items.filter((item) => item instanceof CatalogItem);
-    let nextIndex = 0;
-    let active = 0;
-
-    const markPrefetchedImageOnCard = (item, imageSrc) => {
-      if (!imageSrc || isPlaceholderImageSource(imageSrc)) return;
-      const cardNode = item?.cardElement?.querySelector?.(".catalog-item-card");
-      if (!cardNode) return;
-      cardNode.classList.add("catalog-item-card--has-modal-image");
-    };
-
-    const runNext = () => {
-      while (active < concurrency && nextIndex < queue.length) {
-        const item = queue[nextIndex++];
-        active += 1;
-
-        CatalogItem.getPreloadedCover(item)
-          .then((imageSrc) => {
-            markPrefetchedImageOnCard(item, imageSrc);
-          })
-          .catch(() => getDefaultPlaceholderImg())
-          .finally(() => {
-            active -= 1;
-            runNext();
-          });
-      }
-    };
-
-    if (
-      typeof window !== "undefined" &&
-      typeof window.requestIdleCallback === "function"
-    ) {
-      window.requestIdleCallback(() => runNext(), { timeout: 1200 });
-    } else {
-      setTimeout(runNext, 0);
-    }
-  }
-
-  /**
-   * Returns the optional paper metadata provider if present.
-   * @returns {any|null} Provider object implementing `getCached/get/preload`, or null.
-   */
-  static getPaperMetadataProvider() {
-    const provider =
-      typeof CATALOG_PAPER_METADATA_PROVIDER !== "undefined"
-        ? CATALOG_PAPER_METADATA_PROVIDER
-        : null;
-    if (!provider || typeof provider !== "object") return null;
-    return provider;
-  }
-
-  /**
-   * Gets already-cached paper metadata for a catalog item.
-   * @param {CatalogItem} item Item key used to read cached metadata.
-   * @returns {any|null} Cached metadata object when present; otherwise null.
-   */
-  static getCachedPaperMetadata(item) {
-    const provider = CatalogItem.getPaperMetadataProvider();
-    if (!provider || typeof provider.getCached !== "function") return null;
-    return provider.getCached(item) || null;
-  }
-
-  /**
-   * Fetches paper metadata for a catalog item.
-   * @param {CatalogItem} item Paper-like item to resolve via optional provider.
-   * @returns {Promise<any|null>} Metadata payload or null when unavailable.
-   */
-  static async getPaperMetadata(item) {
-    const provider = CatalogItem.getPaperMetadataProvider();
-    if (!provider || typeof provider.get !== "function") return null;
-    return (await provider.get(item)) || null;
-  }
-
-  /**
-   * Starts background paper metadata preloading.
-   * @param {CatalogItem[]} [items=[]] Candidate items to queue for provider preloading.
-   * @param {{concurrency?: number}} [options={}] Provider-specific preload tuning.
-   * @returns {void}
-   */
-  static preloadPaperMetadataInBackground(items = [], options = {}) {
-    const provider = CatalogItem.getPaperMetadataProvider();
-    if (!provider || typeof provider.preload !== "function") return;
-    provider.preload(items, options);
+    // Intentionally disabled: API image preloading removed.
   }
 
   /**
@@ -310,7 +192,6 @@ class CatalogItem {
 
   /**
    * Renders key/value details for a catalog item inside the modal.
-   * Includes DOI/paper link rows when paper metadata is available.
    * @param {HTMLElement|null} modal Active modal root that hosts `[data-modal-fields]`.
    * @param {CatalogItem} item Item whose fields are displayed.
    * @returns {void}
@@ -336,31 +217,6 @@ class CatalogItem {
       { label: "Description", value: description },
     ];
 
-    if (uiNormalizeType(item?.type) === "paper") {
-      const metadata = CatalogItem.getCachedPaperMetadata(item);
-      const hasProvider = Boolean(CatalogItem.getPaperMetadataProvider());
-      if (metadata?.doiUrl) {
-        rows.push({
-          label: "DOI",
-          value: metadata.doi || metadata.doiUrl,
-          href: metadata.doiUrl,
-        });
-      } else if (metadata?.landingUrl) {
-        rows.push({
-          label: "Paper URL",
-          value: metadata.landingUrl,
-          href: metadata.landingUrl,
-        });
-      } else {
-        rows.push({
-          label: "DOI",
-          value: hasProvider
-            ? "Searching Crossref…"
-            : "Unavailable (optional DOI module disabled)",
-        });
-      }
-    }
-
     modalFields.innerHTML = rows
       .map((row) => {
         const label = uiEscapeHtml(row.label);
@@ -380,7 +236,7 @@ class CatalogItem {
 
   /**
    * Renders syntax-highlighted raw JSON data for the selected item.
-   * Mirrors visible values and augments with paper metadata when relevant.
+   * Raw data reflects the parsed CSV row fields for the item.
    * @param {HTMLElement|null} modal Active modal root that hosts `[data-modal-raw]`.
    * @param {CatalogItem} item Item used to construct debug JSON output.
    * @returns {void}
@@ -406,19 +262,6 @@ class CatalogItem {
       description: item?.description ?? "",
     };
 
-    if (
-      typeof item?.coverLookupUrl === "string" &&
-      item.coverLookupUrl.trim()
-    ) {
-      rawData.coverLookupUrl = item.coverLookupUrl;
-    }
-
-    if (uiNormalizeType(item?.type) === "paper") {
-      const metadata = CatalogItem.getCachedPaperMetadata(item);
-      rawData.doi = metadata?.doi || null;
-      rawData.paperUrl = metadata?.landingUrl || metadata?.doiUrl || null;
-      rawData.paperMetaSource = metadata?.source || null;
-    }
     const json = JSON.stringify(rawData, null, 2);
     modalRaw.innerHTML = highlightJSON(json);
   }
@@ -465,20 +308,6 @@ class CatalogItem {
       item,
       imageSrc || getDefaultPlaceholderImg(),
     );
-  }
-
-  /**
-   * Re-renders modal text content only if the current modal item matches.
-   * Useful after background paper metadata completes.
-   * @param {CatalogItem} item Item whose metadata changed.
-   * @returns {void}
-   */
-  static refreshPaperModalIfCurrent(item) {
-    const modal = document.getElementById(CatalogItem.DETAIL_MODAL_ID);
-    if (!modal) return;
-    if (modal.dataset.currentItemKey !== item.getCacheKey()) return;
-    CatalogItem.renderModalFields(modal, item);
-    CatalogItem.renderModalRaw(modal, item);
   }
 
   // this was mostly just for testing and debugging
@@ -532,21 +361,11 @@ class CatalogItem {
   }
 
   /**
-   * Resolves this item's cover image with fallback behavior.
-   * Tries type-specific lookup, then generic type fallback, then placeholder.
-   * @returns {Promise<string>} Best available image source for this item.
+   * Resolves this item's cover image source.
+   * API image lookups are disabled, so this always returns the placeholder.
+   * @returns {Promise<string>} Placeholder image source.
    */
   async resolveCoverImage() {
-    if (typeof getCover === "function") {
-      const cover = await getCover(this);
-      if (cover) return cover;
-    }
-
-    if (typeof getFallbackCoverForType === "function") {
-      const fallback = await getFallbackCoverForType(this);
-      if (fallback) return fallback;
-    }
-
     return getDefaultPlaceholderImg();
   }
 
@@ -571,8 +390,7 @@ class CatalogItem {
 
   /**
    * Builds an interactive card element and click behavior for this item.
-   * Click behavior opens modal immediately with placeholder, then upgrades media/
-   * paper metadata asynchronously when available.
+   * Click behavior opens the modal with placeholder media.
    * @returns {Promise<HTMLElement>} Fully wired card container element.
    */
   async createCardElement() {
@@ -581,11 +399,6 @@ class CatalogItem {
 
     const card = document.createElement("article");
     card.className = "card h-100 catalog-item-card catalog-item-card--compact";
-
-    const markHasModalImage = (imageSrc) => {
-      if (!imageSrc || isPlaceholderImageSource(imageSrc)) return;
-      card.classList.add("catalog-item-card--has-modal-image");
-    };
 
     const body = document.createElement("section");
     body.className = "card-body p-2";
@@ -612,11 +425,6 @@ class CatalogItem {
 
     card.appendChild(body);
 
-    const initialResolvedImage = CatalogItem.coverResolvedMap.get(
-      this.getCacheKey(),
-    );
-    markHasModalImage(initialResolvedImage);
-
     const trigger = document.createElement("button");
     trigger.type = "button";
     trigger.className =
@@ -626,33 +434,8 @@ class CatalogItem {
       `Open details for ${this.title || "Untitled"}`,
     );
 
-    trigger.addEventListener("click", async () => {
-      const key = this.getCacheKey();
-      const readyImage = CatalogItem.coverResolvedMap.get(key);
-
-      if (readyImage) {
-        markHasModalImage(readyImage);
-        CatalogItem.openModal(this, readyImage);
-      } else {
-        CatalogItem.openModal(this, getDefaultPlaceholderImg());
-        try {
-          const imageSrc = await CatalogItem.getPreloadedCover(this);
-          markHasModalImage(imageSrc);
-          CatalogItem.updateModalImageIfCurrent(this, imageSrc);
-        } catch {
-          // Keep placeholder.
-        }
-      }
-
-      if (uiNormalizeType(this.type) === "paper") {
-        CatalogItem.getPaperMetadata(this)
-          .then(() => {
-            CatalogItem.refreshPaperModalIfCurrent(this);
-          })
-          .catch(() => {
-            CatalogItem.refreshPaperModalIfCurrent(this);
-          });
-      }
+    trigger.addEventListener("click", () => {
+      CatalogItem.openModal(this, getDefaultPlaceholderImg());
     });
 
     trigger.appendChild(card);

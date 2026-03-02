@@ -200,7 +200,7 @@ You may discuss ideas, but all code/design must be your own. You are allowed to 
 
 ## Non-Instructional Notes Section
 
-I aknowledge that I used AI to help with some of the API stuff as I have only ever done that in a node/express/react environment which is very different from vanilla JS. You can also completely ignore the API stuff if it violates the assignment rules, and you can even delete them as it was designed to not matter if it was missing.
+I aknowledge that I used AI to help make someof the JSDOCs as I wanted them but got lazy about it halfway through since it was not required. I additionally asked AI to source some non-music CSV entries that contained special characters so I could make sure those worked.
 
 ## Author
 

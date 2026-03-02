@@ -568,18 +568,6 @@ a:hover {
   overflow: hidden;
 }
 
-.catalog-item-card--has-modal-image::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0.95rem;
-  height: 0.95rem;
-  background: color-mix(in srgb, var(--bs-secondary-border-subtle) 55%, transparent);
-  clip-path: polygon(100% 0, 0 0, 100% 100%);
-  pointer-events: none;
-}
-
 .catalog-card-trigger .catalog-item-card {
   transform: translateY(0);
   transition:

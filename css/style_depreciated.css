@@ -6,19 +6,13 @@
   --light-footer-color: #222;
 
   /*Dark palette */
-  --dark-button-color: color-mix(
-    in srgb,
-    var(--light-button-color) 70%,
-    var(--light-primary-color) 30%
-  );
-  --dark-button-color-hover: hsl(
-    from var(--dark-button-color) h s calc(l * 0.8)
-  );
-  --dark-price-color: color-mix(
-    in srgb,
-    var(--light-price-color) 70%,
-    var(--dark-primary-bg-color) 30%
-  );
+  --dark-button-color: color-mix(in srgb,
+      var(--light-button-color) 70%,
+      var(--light-primary-color) 30%);
+  --dark-button-color-hover: hsl(from var(--dark-button-color) h s calc(l * 0.8));
+  --dark-price-color: color-mix(in srgb,
+      var(--light-price-color) 70%,
+      var(--dark-primary-bg-color) 30%);
   --dark-footer-color: hsl(from var(--light-footer-color) h s calc(l * 0.85));
 }
 
@@ -61,7 +55,7 @@
   overflow: visible;
 }
 
-.main-nav > ul > li {
+.main-nav>ul>li {
   position: relative;
 }
 
@@ -122,7 +116,7 @@
     box-shadow 0.3s;
 }
 
-.product-gallery-row > [class*="col-"] {
+.product-gallery-row>[class*="col-"] {
   display: flex;
   min-height: auto;
 }
@@ -224,6 +218,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .gallery-card,
   .gallery-image::after,
   .see-more-link,
@@ -605,7 +600,7 @@
     padding: 0;
   }
 
-  .main-nav ul > li {
+  .main-nav ul>li {
     flex: 0 0 auto;
   }
 
@@ -640,4 +635,17 @@
 .footer-section p,
 .footer-section ul li a {
   color: lightgray;
+}
+
+/* API-era indicator for cards with fetched modal images (unused now) */
+.catalog-item-card--has-modal-image::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.95rem;
+  height: 0.95rem;
+  background: color-mix(in srgb, var(--bs-secondary-border-subtle) 55%, transparent);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  pointer-events: none;
 }
