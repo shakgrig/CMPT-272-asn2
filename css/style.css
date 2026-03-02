@@ -7,15 +7,12 @@
    */
   --light-header-color: #1c8029;
   --light-button-color: #29a646;
-  --light-button-color-hover: hsl(
-    from var(--light-button-color) h s calc(l * 0.8)
-  );
+  --light-button-color-hover: hsl(from var(--light-button-color) h s calc(l * 0.8));
   --light-primary-color: #212121;
-  --light-accent-color: #765fd9;
-  --light-accent-color-hover: hsl(
-    from var(--light-accent-color) h s calc(l * 0.8)
-  );
-  /*--light-text-color: #4d4d4d;*//* replaced by --bs-secondary-bg from bootstrap as it was nicer */
+  --light-accent-color: rgba(149, 97, 236, 0.75);
+  --light-accent-color-hover: hsl(from var(--light-accent-color) h s calc(l * 0.8));
+  /*--light-text-color: #4d4d4d;*/
+  /* replaced by --bs-secondary-bg from bootstrap as it was nicer */
   --light-text-color: rgba(33 37 41 / 0.75);
   --light-light-bg: #f7f5fd;
   --light-primary-bg-color: #f0f0f0;
@@ -29,33 +26,32 @@
   --light-placeholder-inner: #fff;
   --light-placeholder-icon: #666;
   --light-placeholder-stroke: #c9c9c9;
+  --light-badge-unrated: var(--dark-badge-unrated);
+  --light-badge-very-low: hsl(from var(--dark-badge-very-low) h s calc(l * 1.2));
+  --light-badge-low: hsl(from var(--dark-badge-low) h s calc(l * 1.2));
+  --light-badge-mid: hsl(from var(--dark-badge-mid) h s calc(l * 1.2));
+  --light-badge-good: hsl(from var(--dark-badge-good) h s calc(l * 1.2));
+  --light-badge-excellent: hsl(from var(--dark-badge-excellent) h s calc(l * 1.2));
 
   /*
    * Dark palette
    */
-  --dark-header-color: color-mix(
-    in srgb,
-    var(--light-header-color) 60%,
-    var(--light-primary-color) 40%
-  );
-  --dark-button-color: color-mix(
-    in srgb,
-    var(--light-button-color) 70%,
-    var(--light-primary-color) 30%
-  );
-  --dark-button-color-hover: hsl(
-    from var(--dark-button-color) h s calc(l * 0.8)
-  );
+  --dark-header-color: color-mix(in srgb,
+      var(--light-header-color) 60%,
+      var(--light-primary-color) 40%);
+  --dark-button-color: color-mix(in srgb,
+      var(--light-button-color) 70%,
+      var(--light-primary-color) 30%);
+  --dark-button-color-hover: hsl(from var(--dark-button-color) h s calc(l * 0.8));
   --dark-primary-color: var(--light-primary-bg-color);
   --dark-accent-color: var(--light-accent-color);
   --dark-accent-color-hover: var(--light-accent-color-hover);
-  /*--dark-text-color: #e0e0e0;*//* replaced by --bs-secondary-bg from bootstrap as it was nicer */
-  --dark-text-color: rgba(222 226 230 / 0.75); 
-  --dark-light-bg: color-mix(
-    in srgb,
-    var(--light-light-bg) 10%,
-    var(--dark-primary-bg-color) 90%
-  );
+  /*--dark-text-color: #e0e0e0;*/
+  /* replaced by --bs-secondary-bg from bootstrap as it was nicer */
+  --dark-text-color: rgba(222 226 230 / 0.75);
+  --dark-light-bg: color-mix(in srgb,
+      var(--light-light-bg) 10%,
+      var(--dark-primary-bg-color) 90%);
   --dark-primary-bg-color: var(--light-primary-color);
   --dark-separator-color: #505050;
   --dark-json-key: lightskyblue;
@@ -67,6 +63,13 @@
   --dark-placeholder-inner: #3a3a3a;
   --dark-placeholder-icon: #b0b0b0;
   --dark-placeholder-stroke: #4a4a4a;
+  --dark-badge-unrated: color-mix(in srgb, var(--primary-bg-color) 70%, var(--separator-color) 30%);
+  --dark-badge-very-low: var(--bs-danger);
+  --dark-badge-low: color-mix(in srgb, var(--bs-danger) 70%, var(--bs-warning) 30%);
+  --dark-badge-mid: var(--bs-warning);
+  --dark-badge-good: color-mix(in srgb, var(--bs-success) 70%, var(--bs-warning) 30%);
+  ;
+  --dark-badge-excellent: var(--bs-success);
 }
 
 /*
@@ -93,6 +96,12 @@
   --placeholder-inner: var(--light-placeholder-inner);
   --placeholder-icon: var(--light-placeholder-icon);
   --placeholder-stroke: var(--light-placeholder-stroke);
+  --badge-unrated: var(--light-badge-unrated);
+  --badge-very-low: var(--light-badge-very-low);
+  --badge-low: var(--light-badge-low);
+  --badge-mid: var(--light-badge-mid);
+  --badge-good: var(--light-badge-good);
+  --badge-excellent: var(--light-badge-excellent);
 }
 
 /*
@@ -118,6 +127,12 @@
   --placeholder-inner: var(--dark-placeholder-inner);
   --placeholder-icon: var(--dark-placeholder-icon);
   --placeholder-stroke: var(--dark-placeholder-stroke);
+  --badge-unrated: var(--dark-badge-unrated);
+  --badge-very-low: var(--dark-badge-very-low);
+  --badge-low: var(--dark-badge-low);
+  --badge-mid: var(--dark-badge-mid);
+  --badge-good: var(--dark-badge-good);
+  --badge-excellent: var(--dark-badge-excellent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -141,17 +156,21 @@
     --placeholder-inner: var(--dark-placeholder-inner);
     --placeholder-icon: var(--dark-placeholder-icon);
     --placeholder-stroke: var(--dark-placeholder-stroke);
+    --badge-unrated: var(--dark-badge-unrated);
+    --badge-very-low: var(--dark-badge-very-low);
+    --badge-low: var(--dark-badge-low);
+    --badge-mid: var(--dark-badge-mid);
+    --badge-good: var(--dark-badge-good);
+    --badge-excellent: var(--dark-badge-excellent);
   }
 }
 
 /* fix bootstrap border color vars problem */
 :root {
   --bs-border-color: var(--separator-color);
-  --bs-border-color-translucent: color-mix(
-    in srgb,
-    var(--separator-color) 60%,
-    transparent
-  );
+  --bs-border-color-translucent: color-mix(in srgb,
+      var(--separator-color) 60%,
+      transparent);
   --bs-modal-border-color: var(--separator-color);
 }
 
@@ -180,7 +199,7 @@ body,
 }
 
 .site-header,
-.logo .h1 a,
+.logo .h1,
 .site-footer,
 .theme-button {
   color: white;
@@ -215,8 +234,8 @@ a,
   background-color: var(--header-color);
 }
 
-.rating-badge,
-.theme-selector .form-check-input:checked  {
+.badge:not(:is(.rating-badge)),
+.theme-selector .form-check-input:checked {
   background-color: var(--accent-color);
 }
 
@@ -279,6 +298,42 @@ a,
   border-color: var(--bs-info-border-subtle);
 }
 
+.rating-badge {
+  color: #fff;
+  font-weight: 600;
+  border: 1px solid rgba(0 0 0 / 0.15);
+}
+
+.rating-badge-unrated {
+  background-color: var(--badge-unrated);
+  color: var(--text-color);
+  border-color: color-mix(in srgb, var(--separator-color) 70%, transparent);
+  opacity: 0.75;
+}
+
+.rating-badge-very-low {
+  background-color: var(--badge-very-low);
+}
+
+.rating-badge-low {
+  background-color: var(--badge-low);
+}
+
+.rating-badge-mid {
+  background-color: var(--badge-mid);
+  /*color: #e5e8ec;*/
+  color: var(--light-text-color);
+}
+
+.rating-badge-good {
+  background-color: var(--badge-good);
+}
+
+.rating-badge-excellent {
+  background-color: var(--badge-excellent);
+}
+
+
 /*
  * Base / Reset
  */
@@ -321,19 +376,50 @@ a:hover {
 .logo .h1 {
   margin: 0;
   font-size: 28px;
+  position: relative;
 }
 
 .logo .h1 a {
   text-decoration: none;
 }
 
-.logo .h1 a:hover {
-  text-decoration: underline;
+.logo-title-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  overflow: visible;
+  padding-top: 0.35rem;
+  padding-right: 1.8rem;
+  padding-bottom: 0.2rem;
+}
+
+.logo-title-link {
+  position: relative;
+  z-index: 1;
+}
+
+.main-logo-overlay {
+  position: absolute;
+  left: 40%;
+  top: 35%;
+  width: 9rem;
+  max-width: none;
+  max-height: none;
+  height: auto;
+  object-fit: contain;
+  transform: translate(-50%, -50%) rotate(-3deg) scaleX(1.4);
+  transform-origin: center;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.94;
 }
 
 .logo-mark {
-  font-size: 0.95em;
-  line-height: 1;
+  width: 2.7rem;
+  height: 2.7rem;
+  object-fit: contain;
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .site-footer {
@@ -375,7 +461,6 @@ a:hover {
 .footer-copyright {
   margin: 12px 0 0;
   font-size: 14px;
-  color: lightgray;
 }
 
 .footer-course {
@@ -478,6 +563,23 @@ a:hover {
   min-height: 12rem;
 }
 
+.catalog-item-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.catalog-item-card--has-modal-image::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.95rem;
+  height: 0.95rem;
+  background: color-mix(in srgb, var(--bs-secondary-border-subtle) 55%, transparent);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  pointer-events: none;
+}
+
 .catalog-card-trigger .catalog-item-card {
   transform: translateY(0);
   transition:
@@ -518,13 +620,21 @@ a:hover {
   overflow: hidden;
 }
 
-.catalog-item-card--compact .card-body > .d-flex {
+.catalog-item-card--compact .card-body>.d-flex {
   margin-top: auto;
 }
 
 .catalog-item-card--compact .badge {
-  line-height: 1;
+  line-height: 0.8;
+  font-size: 0.6rem;
 }
+
+.catalog-item-card--compact .card-details {
+  flex: 0 0 100%;
+  width: 100%;
+  text-align: right;
+}
+
 
 .catalog-card-trigger:focus-visible {
   outline: 3px solid var(--accent-color);
@@ -536,7 +646,7 @@ a:hover {
   margin: 40px 0;
 }
 
-.generated-cards > p {
+.generated-cards>p {
   text-align: center;
 }
 

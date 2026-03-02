@@ -1,9 +1,18 @@
 "use strict";
 
+/**
+ * Builds the raw SVG markup used as the generic catalog placeholder image.
+ * @returns {string} Serialized SVG markup string.
+ */
 function buildPlaceholderSvgMarkup() {
   return `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="300 150 600 900" preserveAspectRatio="xMidYMid meet"><rect x="300" y="150" width="600" height="900" fill="var(--placeholder-bg)" rx="3"/><g opacity=".5"><g opacity=".5"><path fill="var(--placeholder-outer)" d="M600.709 736.5c-75.454 0-136.621-61.167-136.621-136.62 0-75.454 61.167-136.621 136.621-136.621 75.453 0 136.62 61.167 136.62 136.621 0 75.453-61.167 136.62-136.62 136.62Z"/><path stroke="var(--placeholder-stroke)" stroke-width="2.418" d="M600.709 736.5c-75.454 0-136.621-61.167-136.621-136.62 0-75.454 61.167-136.621 136.621-136.621 75.453 0 136.62 61.167 136.62 136.621 0 75.453-61.167 136.62-136.62 136.62Z"/></g><path stroke="url(#a)" stroke-width="2.418" d="M0-1.209h553.581" transform="scale(1 -1) rotate(45 1163.11 91.165)"/><path stroke="url(#b)" stroke-width="2.418" d="M404.846 598.671h391.726"/><path stroke="url(#c)" stroke-width="2.418" d="M599.5 795.742V404.017"/><path stroke="url(#d)" stroke-width="2.418" d="m795.717 796.597-391.441-391.44"/><path fill="var(--placeholder-inner)" d="M600.709 656.704c-31.384 0-56.825-25.441-56.825-56.824 0-31.384 25.441-56.825 56.825-56.825 31.383 0 56.824 25.441 56.824 56.825 0 31.383-25.441 56.824-56.824 56.824Z"/><g clip-path="url(#e)"><path fill="var(--placeholder-icon)" fill-rule="evenodd" d="M616.426 586.58h-31.434v16.176l3.553-3.554.531-.531h9.068l.074-.074 8.463-8.463h2.565l7.18 7.181V586.58Zm-15.715 14.654 3.698 3.699 1.283 1.282-2.565 2.565-1.282-1.283-5.2-5.199h-6.066l-5.514 5.514-.073.073v2.876a2.418 2.418 0 0 0 2.418 2.418h26.598a2.418 2.418 0 0 0 2.418-2.418v-8.317l-8.463-8.463-7.181 7.181-.071.072Zm-19.347 5.442v4.085a6.045 6.045 0 0 0 6.046 6.045h26.598a6.044 6.044 0 0 0 6.045-6.045v-7.108l1.356-1.355-1.282-1.283-.074-.073v-17.989h-38.689v23.43l-.146.146.146.147Z" clip-rule="evenodd"/></g><path stroke="var(--placeholder-stroke)" stroke-width="2.418" d="M600.709 656.704c-31.384 0-56.825-25.441-56.825-56.824 0-31.384 25.441-56.825 56.825-56.825 31.383 0 56.824 25.441 56.824 56.825 0 31.383-25.441 56.824-56.824 56.824Z"/></g><defs><linearGradient id="a" x1="554.061" x2="-.48" y1=".083" y2=".087" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><linearGradient id="b" x1="796.912" x2="404.507" y1="599.963" y2="599.965" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><linearGradient id="c" x1="600.792" x2="600.794" y1="403.677" y2="796.082" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><linearGradient id="d" x1="404.85" x2="796.972" y1="403.903" y2="796.02" gradientUnits="userSpaceOnUse"><stop stop-color="var(--placeholder-stroke)" stop-opacity="0"/><stop offset=".208" stop-color="var(--placeholder-stroke)"/><stop offset=".792" stop-color="var(--placeholder-stroke)"/><stop offset="1" stop-color="var(--placeholder-stroke)" stop-opacity="0"/></linearGradient><clipPath id="e"><path fill="var(--placeholder-icon)" d="M581.364 580.535h38.689v38.689h-38.689z"/></clipPath></defs></svg>`;
 }
 
+/**
+ * Creates an SVGElement from the placeholder markup.
+ * @param {string} [className=""] Optional CSS class list applied to the root SVG.
+ * @returns {SVGElement|null} Parsed SVG root or null when parsing unexpectedly fails.
+ */
 function createPlaceholderSvgElement(className = "") {
   const template = document.createElement("template");
   template.innerHTML = buildPlaceholderSvgMarkup().trim();
@@ -13,6 +22,10 @@ function createPlaceholderSvgElement(className = "") {
   return svg;
 }
 
+/**
+ * Returns the default placeholder asset path.
+ * @returns {string} Relative URL to the shared placeholder SVG file.
+ */
 function getPlaceholderSrc() {
   return "assets/placeholder_viewboxed_600x900.svg";
 }
