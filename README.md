@@ -153,13 +153,7 @@ Your file structure should be similar to Assignment 1, with separate folders for
 
 Here's a sample demo of the final product:
 
-<!-- For local video playback -->
-
-<video id="videoPlayer" src="./public/as2.mp4" controls></video>
-
-<!-- For GitHub video playback -->
-
-[](https://media.github.sfu.ca/user/4425/files/991bfc7a-e0b4-4e2f-8d44-d7d1922bfc2b)
+<video src="https://raw.githubusercontent.com/shakgrig/CMPT-272-asn2/main/assets/as2.mp4" controls></video>
 
 Please play around with elements and properties not mentioned in this description; once again, a part of your mark is based on effort and creativity.
 
