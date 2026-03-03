@@ -159,7 +159,7 @@ Here's a sample demo of the final product:
 
 <!-- For GitHub video playback -->
 
-[](https://media.github.sfu.ca/user/4425/files/991bfc7a-e0b4-4e2f-8d44-d7d1922bfc2b)
+[▶ Watch Demo Video](https://media.github.sfu.ca/user/4425/files/991bfc7a-e0b4-4e2f-8d44-d7d1922bfc2b)
 
 Please play around with elements and properties not mentioned in this description; once again, a part of your mark is based on effort and creativity.
 
