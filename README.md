@@ -155,7 +155,7 @@ Here's a sample demo of the final product:
 
 <!-- For local video playback -->
 
-<video id="videoPlayer" src="./public/as2.mp4" controls></video>
+<video id="videoPlayer" src="./assets/as2.mp4" controls></video>
 
 <!-- For GitHub video playback -->
 
